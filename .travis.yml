@@ -19,7 +19,7 @@ before_script:
   - cd $TRAVIS_BUILD_DIR
 
 script:
-  - ant phpunit-coverage
+  - vendor/bin/phpunit --coverage-text --coverage-clover=coverage.clover
 
 #after_success:
 #  - if [ "$TRAVIS_PHP_VERSION" == "7.2" ]; then wget https://scrutinizer-ci.com/ocular.phar; fi
