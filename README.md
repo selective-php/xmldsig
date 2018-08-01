@@ -87,10 +87,6 @@ if($isValid) {
 }
 ```
 
-## Documentation
-
-This package is documented [here](https://odan.github.io/xmldsig/).
-
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE) for more information.
