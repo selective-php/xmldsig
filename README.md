@@ -28,6 +28,7 @@ composer require odan/xmldsig
 Input file: example.xml
 
 ```xml
+<?xml version="1.0"?>
 <root>  
     <creditcard>  
         <number>19834209</number>  
@@ -56,12 +57,12 @@ Output file: signed-example.xml
 <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
     <SignedInfo>
         <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
-        <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha512"/>
+        <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"/>
         <Reference URI="">
             <Transforms>
                 <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
             </Transforms>
-            <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha512"/>
+            <DigestMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"/>
             <DigestValue>Base64EncodedValue==</DigestValue>
         </Reference>
     </SignedInfo>
