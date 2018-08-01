@@ -25,14 +25,6 @@ composer require odan/xmldsig
 
 ### Sign XML Documents with Digital Signatures
 
-```php
-
-```
-
-### Verify the Digital Signatures of XML Documents
-
-#### Using a .pfx file
-
 Input file: example.xml
 
 ```xml
@@ -62,20 +54,30 @@ Output file: signed-example.xml
         <expiry>02/02/2025</expiry>  
     </creditcard>  
 	<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
-	<SignedInfo>
-		<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
-		<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha512"/>
-		<Reference URI="">
-			<Transforms>
-				<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
-			</Transforms>
-			<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha512"/>
-			<DigestValue>e4fItlvaCb8Vm2MYTnnmGZ3aujRb/J+79Fc/nCkE8WYn5lPuztUl1GxoODZYFMA1jzP4FSTaEuMgsCmmmXU0xw==</DigestValue>
-		</Reference>
-	</SignedInfo>
-	<SignatureValue>rzflsb768ViuC+yrrZfr7H+iren/cvIIpXETqGNwHU5u9TixY13vI4xgmriGDErKCKe5...</SignatureValue>
+        <SignedInfo>
+            <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+            <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha512"/>
+            <Reference URI="">
+                <Transforms>
+                    <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+                </Transforms>
+                <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha512"/>
+                <DigestValue>e4fItlvaCb8Vm2MYTnnmGZ3aujRb/J+79Fc/nCkE8WYn5lPuz...</DigestValue>
+            </Reference>
+        </SignedInfo>
+        <SignatureValue>rzflsb768ViuC+yrrZfr7H+iren/cvIIpXETqGNwHU5u9TixY13vI4...</SignatureValue>
 	</Signature>
 </root>
+```
+
+### Verify the Digital Signatures of XML Documents
+
+```php
+use Odan\XmlDSig\VerifyXml;
+
+$verifyXml = new VerifyXml();
+$verifyXml->loadPfx('filename.pfx', 'password');
+$verifyXml->verifyXmlFile('signed-example.xml');
 ```
 
 ## Documentation
