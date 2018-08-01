@@ -62,10 +62,10 @@ Output file: signed-example.xml
                 <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
             </Transforms>
             <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha512"/>
-            <DigestValue>e4fItlvaCb8Vm2MYTnnmGZ3aujRb/J+79Fc/nCkE8WYn5lPuz...</DigestValue>
+            <DigestValue>Base64EncodedValue==</DigestValue>
         </Reference>
     </SignedInfo>
-    <SignatureValue>rzflsb768ViuC+yrrZfr7H+iren/cvIIpXETqGNwHU5u9TixY13vI4...</SignatureValue>
+    <SignatureValue>AnotherBase64EncodedValue===</SignatureValue>
 </Signature>
 </root>
 ```

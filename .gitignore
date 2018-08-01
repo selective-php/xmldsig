@@ -9,5 +9,8 @@ cache.properties
 vendor/
 build/
 
+tests/example-test.xml
+tests/signed-example.xml
+
 
 
