@@ -6,7 +6,7 @@ use DOMDocument;
 use RuntimeException;
 
 /**
- * Class SignedXml
+ * Class SignedXml.
  */
 final class SignedXml
 {
@@ -75,6 +75,7 @@ final class SignedXml
      *
      * @param string $filename PFX filename
      * @param string $password PFX password
+     *
      * @return bool Success
      */
     public function loadPfx(string $filename, string $password): bool
@@ -106,6 +107,7 @@ final class SignedXml
      *
      * @param string $filename Input file
      * @param string $outputFilename Output file
+     *
      * @return bool Success
      */
     public function signXmlFile(string $filename, string $outputFilename): bool
@@ -125,14 +127,11 @@ final class SignedXml
         $xml->load($filename);
         $data = $xml->saveXML();
 
-        //file_put_contents(__DIR__ . '/../tests/example-data.xml', $data);
-        //$sha1 = sha1($data);
-
         // Compute signature with SHA-512
         $status = openssl_sign($data, $signature, $this->privateKeyId, $this->digestAlgorithm);
 
         if (!$status) {
-            throw new RuntimeException(__('Computing of the signature failed'));
+            throw new RuntimeException('Computing of the signature failed');
         }
 
         // Encode signature
@@ -149,11 +148,12 @@ final class SignedXml
     }
 
     /**
-     * Create the XML representation of the signature
+     * Create the XML representation of the signature.
      *
      * @param string $data
      * @param string $digestValue
      * @param string $signatureValue
+     *
      * @return DOMDocument
      */
     public function createSignedXml(string $data, string $digestValue, string $signatureValue): DOMDocument
@@ -206,7 +206,7 @@ final class SignedXml
     }
 
     /**
-     * Destructor
+     * Destructor.
      */
     public function __destruct()
     {

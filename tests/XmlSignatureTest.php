@@ -30,7 +30,7 @@ class XmlSignatureTest extends TestCase
      */
     public function testSignAndVerify()
     {
-        $pfxFilename = __DIR__  . '/localhost.pfx';
+        $pfxFilename = __DIR__ . '/localhost.pfx';
         $filename = __DIR__ . '/example.xml';
         $outputFilename = __DIR__ . '/signed-example.xml';
 
@@ -41,7 +41,7 @@ class XmlSignatureTest extends TestCase
         $this->assertFileExists($filename);
 
         foreach ($algos as $algo) {
-            if(file_exists($outputFilename)) {
+            if (file_exists($outputFilename)) {
                 unlink($outputFilename);
             }
 

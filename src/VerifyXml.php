@@ -7,7 +7,7 @@ use DOMXPath;
 use RuntimeException;
 
 /**
- * Class
+ * Class.
  */
 class VerifyXml
 {
@@ -28,6 +28,7 @@ class VerifyXml
      *
      * @param string $filename PFX filename
      * @param string $password PFX password
+     *
      * @return bool Success
      */
     public function loadPfx(string $filename, string $password): bool
@@ -57,6 +58,7 @@ class VerifyXml
      * This method does not save the public key within the XML file.
      *
      * @param string $filename Input file
+     *
      * @return bool Success
      */
     public function verifyXmlFile(string $filename): bool
@@ -88,7 +90,7 @@ class VerifyXml
             // The XML signature is not valid
             return false;
         } else {
-            throw new RuntimeException(__('Error checking signature'));
+            throw new RuntimeException('Error checking signature');
         }
     }
 
@@ -96,18 +98,19 @@ class VerifyXml
      * Detect disgest algorithm.
      *
      * @param DOMDocument $xml
+     *
      * @return string
      */
     private function getSignatureValue(DOMDocument $xml): string
     {
         $xpath = new DOMXPath($xml);
-        $xpath->registerNamespace("xmlns", "http://www.w3.org/2000/09/xmldsig#");
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
         // Find the "Signature" node and create a new
         $signatureNodes = $xpath->query('//xmlns:Signature/xmlns:SignatureValue');
 
         // Throw an exception if no signature was found.
-        if (!$signatureNodes || !$signatureNodes->length) {
+        if ($signatureNodes->length < 1) {
             throw new RuntimeException('Verification failed: No Signature was found in the document.');
         }
 
@@ -117,7 +120,7 @@ class VerifyXml
             throw new RuntimeException('Verification failed: More that one signature was found for the document.');
         }
 
-        $result = (string)$signatureNodes->item(0)->nodeValue;
+        $result = $signatureNodes->item(0)->nodeValue;
         $result = base64_decode($result);
 
         return $result;
@@ -127,12 +130,13 @@ class VerifyXml
      * Get the real xml content (without the signature).
      *
      * @param DOMDocument $xml DOMDocument
+     *
      * @return string Xml content
      */
     public function getXmlContent(DOMDocument $xml): string
     {
         $xpath = new DOMXPath($xml);
-        $xpath->registerNamespace("xmlns", "http://www.w3.org/2000/09/xmldsig#");
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
         $signatureNodes = $xpath->query('//xmlns:Signature');
         foreach ($signatureNodes as $signatureNode) {
@@ -145,25 +149,26 @@ class VerifyXml
             throw new RuntimeException('The XML content is not readable');
         }
 
-        return (string)$content;
+        return $content;
     }
 
     /**
      * Detect disgest algorithm.
      *
      * @param DOMDocument $xml
+     *
      * @return int
      */
     private function getDigestAlgorithm(DOMDocument $xml): int
     {
         $xpath = new DOMXPath($xml);
-        $xpath->registerNamespace("xmlns", "http://www.w3.org/2000/09/xmldsig#");
-        $xpath->registerNamespace("Algorithm", "http://www.w3.org/TR/2001/REC-xml-c14n-20010315");
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
+        $xpath->registerNamespace('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315');
 
         $signatureMethodNodes = $xpath->query('//xmlns:Signature/xmlns:SignedInfo/xmlns:SignatureMethod');
 
         // Throw an exception if no signature was found.
-        if (!$signatureMethodNodes || !$signatureMethodNodes->length) {
+        if ($signatureMethodNodes->length < 1) {
             throw new RuntimeException('Verification failed: No Signature was found in the document.');
         }
 
@@ -197,7 +202,7 @@ class VerifyXml
     }
 
     /**
-     * Destructor
+     * Destructor.
      */
     public function __destruct()
     {
