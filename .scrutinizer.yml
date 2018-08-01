@@ -1,0 +1,36 @@
+filter:
+    paths: ["src/*"]
+    excluded_paths: ["vendor/*", "tests/*", "resources/", "public/"]
+
+checks:
+    php:
+        code_rating: true
+        duplication: true
+
+tools:
+    external_code_coverage: false
+
+build:
+    environment:
+        php: 7.2
+        mysql: true
+        node: false
+        postgresql: false
+        mongodb: false
+        elasticsearch: false
+        redis: false
+        memcached: false
+        neo4j: false
+        rabbitmq: false
+    dependencies:
+            before:
+                 - composer self-update
+                 - composer update --no-interaction --prefer-dist
+                 - php cli.php install --environment travis
+    tests:
+        before:
+            -
+                command: 'vendor/bin/phpunit --coverage-clover build/logs/clover.xml'
+                coverage:
+                    file: 'build/logs/clover.xml'
+                    format: 'clover'
