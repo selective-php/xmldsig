@@ -3,12 +3,12 @@
 * Sign XML Documents with Digital Signatures ([XMLDSIG](https://www.w3.org/TR/xmldsig-core/))
 * Verify the Digital Signatures of XML Documents
 
-[![Latest Version on Packagist](https://img.shields.io/github/release/odan/xmldsig.svg)](https://github.com/odan/xmldsig/releases)
+[![Latest Version on Packagist](https://img.shields.io/github/release/odan/xmldsig.svg)](https://packagist.org/packages/odan/xmldsig)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 [![Build Status](https://travis-ci.org/odan/xmldsig.svg?branch=master)](https://travis-ci.org/odan/xmldsig)
 [![Code Coverage](https://scrutinizer-ci.com/g/odan/xmldsig/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/odan/xmldsig/?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/odan/xmldsig/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/odan/xmldsig/?branch=master)
-[![Total Downloads](https://img.shields.io/packagist/dt/odan/xmldsig.svg)](https://packagist.org/packages/odan/xmldsig)
+[![Total Downloads](https://img.shields.io/packagist/dt/odan/xmldsig.svg)](https://packagist.org/packages/odan/xmldsig/stats)
 
 ## Requirements
 
