@@ -8,7 +8,7 @@ use RuntimeException;
 /**
  * Class SignedXml.
  */
-final class SignedXml
+class SignedXml
 {
     //
     // RSA (PKCS#1 v1.5) Identifier
@@ -20,27 +20,20 @@ final class SignedXml
     const SHA384_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384';
     const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
 
-    private $digestAlgorithm;
-    private $digestAlgorithmName;
-    private $digestAlgorithmUrl;
-    private $privateKeyId;
+    protected $digestAlgorithm;
+
+    protected $digestAlgorithmName;
+
+    protected $digestAlgorithmUrl;
+
+    protected $privateKeyId;
 
     /**
-     * Constructor.
+     * Set digest algorithm.
      *
      * @param string $digestAlgorithm sha1, sha224, sha256, sha384, sha512
      */
-    public function __construct(string $digestAlgorithm)
-    {
-        $this->setDisgestAlgorithm($digestAlgorithm);
-    }
-
-    /**
-     * Set disgest algorithm.
-     *
-     * @param string $digestAlgorithm sha1, sha224, sha256, sha384, sha512
-     */
-    private function setDisgestAlgorithm(string $digestAlgorithm): void
+    protected function setDigestAlgorithm(string $digestAlgorithm): void
     {
         switch ($digestAlgorithm) {
             case 'sha1':
@@ -107,10 +100,11 @@ final class SignedXml
      *
      * @param string $filename Input file
      * @param string $outputFilename Output file
+     * @param string $digestAlgorithm sha1, sha224, sha256, sha384, sha512
      *
      * @return bool Success
      */
-    public function signXmlFile(string $filename, string $outputFilename): bool
+    public function signXmlFile(string $filename, string $outputFilename, string $digestAlgorithm): bool
     {
         if (!file_exists($filename)) {
             throw new RuntimeException(sprintf('File not found: %s', $filename));
@@ -119,6 +113,8 @@ final class SignedXml
         if (!$this->privateKeyId) {
             throw new RuntimeException('No private key provided');
         }
+
+        $this->setDigestAlgorithm($digestAlgorithm);
 
         // Read the xml file content
         $xml = new DOMDocument();

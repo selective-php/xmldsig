@@ -20,7 +20,7 @@ class XmlSignatureTest extends TestCase
      */
     public function testInstance()
     {
-        $this->assertInstanceOf(SignedXml::class, new SignedXml('sha512'));
+        $this->assertInstanceOf(SignedXml::class, new SignedXml());
     }
 
     /**
@@ -47,9 +47,9 @@ class XmlSignatureTest extends TestCase
 
             $this->assertFileNotExists($outputFilename);
 
-            $signedXml = new SignedXml($algo);
+            $signedXml = new SignedXml();
             $signedXml->loadPfx($pfxFilename, $password);
-            $success = $signedXml->signXmlFile($filename, $outputFilename);
+            $success = $signedXml->signXmlFile($filename, $outputFilename, $algo);
 
             $this->assertTrue($success);
             $this->assertFileExists($outputFilename);

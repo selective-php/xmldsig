@@ -75,7 +75,7 @@ class VerifyXml
         $xml = new DOMDocument();
         $xml->preserveWhiteSpace = false;
         $xml->formatOutput = true;
-        $xml->load($filename);
+        $xml->loadXML(file_get_contents($filename));
 
         $digestAlgorithm = $this->getDigestAlgorithm($xml);
         $signatureValue = $this->getSignatureValue($xml);
@@ -95,13 +95,13 @@ class VerifyXml
     }
 
     /**
-     * Detect disgest algorithm.
+     * Detect digest algorithm.
      *
      * @param DOMDocument $xml
      *
      * @return string
      */
-    private function getSignatureValue(DOMDocument $xml): string
+    protected function getSignatureValue(DOMDocument $xml): string
     {
         $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
@@ -153,13 +153,13 @@ class VerifyXml
     }
 
     /**
-     * Detect disgest algorithm.
+     * Detect digest algorithm.
      *
      * @param DOMDocument $xml
      *
      * @return int
      */
-    private function getDigestAlgorithm(DOMDocument $xml): int
+    protected function getDigestAlgorithm(DOMDocument $xml): int
     {
         $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
