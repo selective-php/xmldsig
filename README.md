@@ -3,12 +3,12 @@
 * Sign XML Documents with Digital Signatures ([XMLDSIG](https://www.w3.org/TR/xmldsig-core/))
 * Verify the Digital Signatures of XML Documents
 
-[![Latest Version on Packagist](https://img.shields.io/github/release/odan/xmldsig.svg)](https://packagist.org/packages/odan/xmldsig)
+[![Latest Version on Packagist](https://img.shields.io/github/release/selective/xmldsig.svg)](https://packagist.org/packages/selective/xmldsig)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
-[![Build Status](https://travis-ci.org/odan/xmldsig.svg?branch=master)](https://travis-ci.org/odan/xmldsig)
-[![Code Coverage](https://scrutinizer-ci.com/g/odan/xmldsig/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/odan/xmldsig/?branch=master)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/odan/xmldsig/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/odan/xmldsig/?branch=master)
-[![Total Downloads](https://img.shields.io/packagist/dt/odan/xmldsig.svg)](https://packagist.org/packages/odan/xmldsig/stats)
+[![Build Status](https://travis-ci.org/selective-php/xmldsig.svg?branch=master)](https://travis-ci.org/selective/xmldsig)
+[![Code Coverage](https://scrutinizer-ci.com/g/odan/xmldsig/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/selective-php/xmldsig/?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/selective-php/xmldsig/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/selective-php/xmldsig/?branch=master)
+[![Total Downloads](https://img.shields.io/packagist/dt/selective/xmldsig.svg)](https://packagist.org/packages/selective/xmldsig/stats)
 
 ## Requirements
 
@@ -18,7 +18,7 @@
 ## Installation
 
 ```
-composer require odan/xmldsig
+composer require selective/xmldsig
 ```
 
 ## Usage
@@ -38,7 +38,7 @@ Input file: example.xml
 ```
 
 ```php
-use Odan\XmlDSig\SignedXml;
+use Selective\XmlDSig\SignedXml;
 
 $signedXml = new SignedXml('sha512');
 $signedXml->loadPfx('filename.pfx', 'password');
