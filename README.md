@@ -13,7 +13,8 @@
 ## Requirements
 
 * PHP 7.1.3+
-* openssl extension
+* The openssl extension
+* An X.509 digital certificate
 
 ## Installation
 
@@ -38,11 +39,11 @@ Input file: example.xml
 ```
 
 ```php
-use Selective\XmlDSig\SignedXml;
+use Selective\XmlDSig\XmlSigner;
 
-$signedXml = new SignedXml('sha512');
-$signedXml->loadPfx('filename.pfx', 'password');
-$signedXml->signXmlFile('example.xml', 'signed-example.xml');
+$xmlSigner = new XmlSigner('sha512');
+$xmlSigner->loadPfx('filename.pfx', 'password');
+$xmlSigner->signXmlFile('example.xml', 'signed-example.xml');
 ```
 
 Output file: signed-example.xml
@@ -74,13 +75,13 @@ Output file: signed-example.xml
 ### Verify the Digital Signatures of XML Documents
 
 ```php
-use Odan\XmlDSig\VerifyXml;
+use Selective\XmlDSig\XmlSignatureValidator;
 
-$verifyXml = new VerifyXml();
-$verifyXml->loadPfx('filename.pfx', 'password');
-$isValid = $verifyXml->verifyXmlFile('signed-example.xml');
+$signatureValidator = new XmlSignatureValidator();
+$signatureValidator->loadPfx('filename.pfx', 'password');
+$isValid = $signatureValidator->verifyXmlFile('signed-example.xml');
 
-if($isValid) {
+if ($isValid) {
     echo 'The XML signature is valid.';
 } else {
     echo 'The XML signature is not valid.';
@@ -90,10 +91,3 @@ if($isValid) {
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE) for more information.
-
-
-[PSR-1]: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-1-basic-coding-standard.md
-[PSR-2]: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-2-coding-style-guide.md
-[PSR-4]: https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-4-autoloader.md
-[Composer]: http://getcomposer.org/
-[PHPUnit]: http://phpunit.de/

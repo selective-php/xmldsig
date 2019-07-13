@@ -7,9 +7,9 @@ use DOMXPath;
 use RuntimeException;
 
 /**
- * Class.
+ * Verify the Digital Signatures of XML Documents.
  */
-final class VerifyXml
+final class XmlSignatureValidator
 {
     //
     // RSA (PKCS#1 v1.5) Identifier
@@ -38,6 +38,11 @@ final class VerifyXml
         }
 
         $certStore = file_get_contents($filename);
+
+        if (!$certStore) {
+            throw new RuntimeException(sprintf('File could not be read: %s', $filename));
+        }
+
         $status = openssl_pkcs12_read($certStore, $certInfo, $password);
 
         if (!$status) {
@@ -86,12 +91,13 @@ final class VerifyXml
         if ($status === 1) {
             // The XML signature is valid
             return true;
-        } elseif ($status === 0) {
+        }
+        if ($status === 0) {
             // The XML signature is not valid
             return false;
-        } else {
-            throw new RuntimeException('Error checking signature');
         }
+
+        throw new RuntimeException('Error checking signature');
     }
 
     /**

@@ -6,9 +6,9 @@ use DOMDocument;
 use RuntimeException;
 
 /**
- * SignedXml.
+ * Sign XML Documents with Digital Signatures (XMLDSIG).
  */
-final class SignedXml
+final class XmlSigner
 {
     //
     // RSA (PKCS#1 v1.5) Identifier
@@ -20,12 +20,24 @@ final class SignedXml
     private const SHA384_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384';
     private const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
 
+    /**
+     * @var int
+     */
     private $digestAlgorithm;
 
+    /**
+     * @var string
+     */
     private $digestAlgorithmName;
 
+    /**
+     * @var string
+     */
     private $digestAlgorithmUrl;
 
+    /**
+     * @var resource|false
+     */
     private $privateKeyId;
 
     /**
@@ -43,6 +55,11 @@ final class SignedXml
         }
 
         $certStore = file_get_contents($filename);
+
+        if (!$certStore) {
+            throw new RuntimeException(sprintf('File could not be read: %s', $filename));
+        }
+
         $status = openssl_pkcs12_read($certStore, $certInfo, $password);
 
         if (!$status) {
@@ -50,7 +67,7 @@ final class SignedXml
         }
 
         // Read the private key
-        $this->privateKeyId = openssl_get_privatekey($certInfo['pkey']);
+        $this->privateKeyId = openssl_get_privatekey((string)$certInfo['pkey']);
 
         if (!$this->privateKeyId) {
             throw new RuntimeException('Invalid private key');

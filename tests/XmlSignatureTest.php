@@ -2,14 +2,14 @@
 
 namespace Selective\XmlDSig\Test;
 
-use Selective\XmlDSig\SignedXml;
-use Selective\XmlDSig\VerifyXml;
+use Selective\XmlDSig\XmlSigner;
+use Selective\XmlDSig\XmlSignatureValidator;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Test.
  *
- * @coversDefaultClass \Selective\XmlDSig\SignedXml
+ * @coversDefaultClass \Selective\XmlDSig\XmlSigner
  */
 class XmlSignatureTest extends TestCase
 {
@@ -20,7 +20,7 @@ class XmlSignatureTest extends TestCase
      */
     public function testInstance()
     {
-        $this->assertInstanceOf(SignedXml::class, new SignedXml());
+        $this->assertInstanceOf(XmlSigner::class, new XmlSigner());
     }
 
     /**
@@ -47,7 +47,7 @@ class XmlSignatureTest extends TestCase
 
             $this->assertFileNotExists($outputFilename);
 
-            $signedXml = new SignedXml();
+            $signedXml = new XmlSigner();
             $signedXml->loadPfx($pfxFilename, $password);
             $success = $signedXml->signXmlFile($filename, $outputFilename, $algo);
 
@@ -55,7 +55,7 @@ class XmlSignatureTest extends TestCase
             $this->assertFileExists($outputFilename);
 
             // verify
-            $verifyXml = new VerifyXml();
+            $verifyXml = new XmlSignatureValidator();
             $verifyXml->loadPfx($pfxFilename, $password);
             $isValid = $verifyXml->verifyXmlFile($outputFilename);
 
