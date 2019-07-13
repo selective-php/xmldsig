@@ -1,5 +1,5 @@
 {
-  "name": "odan/xmldsig",
+  "name": "selective/xmldsig",
   "type": "library",
   "description": "Sign XML Documents with Digital Signatures",
   "keywords": [
@@ -8,12 +8,12 @@
     "signatures",
     "verify"
   ],
-  "homepage": "https://github.com/odan/xmldsig",
+  "homepage": "https://github.com/selective-php/xmldsig",
   "license": "MIT",
   "authors": [
     {
       "name": "odan",
-      "homepage": "https://github.com/odan"
+      "homepage": "https://github.com/selective-php"
     }
   ],
   "require": {
@@ -31,8 +31,8 @@
   },
   "autoload": {
     "psr-4": {
-      "Odan\\XmlDSig\\": "src",
-      "Odan\\XmlDSig\\Test\\": "tests"
+      "Selective\\XmlDSig\\": "src",
+      "Selective\\XmlDSig\\Test\\": "tests"
     }
   }
 }
