@@ -1,6 +1,6 @@
 <?php
 
-namespace Odan\XmlDSig;
+namespace Selective\XmlDSig;
 
 use DOMDocument;
 use DOMXPath;
@@ -9,7 +9,7 @@ use RuntimeException;
 /**
  * Class.
  */
-class VerifyXml
+final class VerifyXml
 {
     //
     // RSA (PKCS#1 v1.5) Identifier

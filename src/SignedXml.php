@@ -1,67 +1,32 @@
 <?php
 
-namespace Odan\XmlDSig;
+namespace Selective\XmlDSig;
 
 use DOMDocument;
 use RuntimeException;
 
 /**
- * Class SignedXml.
+ * SignedXml.
  */
-class SignedXml
+final class SignedXml
 {
     //
     // RSA (PKCS#1 v1.5) Identifier
     // https://www.w3.org/TR/xmldsig-core/#sec-PKCS1
     //
-    const SHA1_URL = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1';
-    const SHA224_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha224';
-    const SHA256_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
-    const SHA384_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384';
-    const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
+    private const SHA1_URL = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1';
+    private const SHA224_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha224';
+    private const SHA256_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+    private const SHA384_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384';
+    private const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
 
-    protected $digestAlgorithm;
+    private $digestAlgorithm;
 
-    protected $digestAlgorithmName;
+    private $digestAlgorithmName;
 
-    protected $digestAlgorithmUrl;
+    private $digestAlgorithmUrl;
 
-    protected $privateKeyId;
-
-    /**
-     * Set digest algorithm.
-     *
-     * @param string $digestAlgorithm sha1, sha224, sha256, sha384, sha512
-     */
-    protected function setDigestAlgorithm(string $digestAlgorithm): void
-    {
-        switch ($digestAlgorithm) {
-            case 'sha1':
-                $this->digestAlgorithmUrl = self::SHA1_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA1;
-                break;
-            case 'sha224':
-                $this->digestAlgorithmUrl = self::SHA224_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA224;
-                break;
-            case 'sha256':
-                $this->digestAlgorithmUrl = self::SHA256_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA256;
-                break;
-            case 'sha384':
-                $this->digestAlgorithmUrl = self::SHA384_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA384;
-                break;
-            case 'sha512':
-                $this->digestAlgorithmUrl = self::SHA512_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA512;
-                break;
-            default:
-                throw new RuntimeException("Cannot validate digest: Unsupported Algorithm <$digestAlgorithm>");
-        }
-
-        $this->digestAlgorithmName = $digestAlgorithm;
-    }
+    private $privateKeyId;
 
     /**
      * Read and load the pfx file.
@@ -133,7 +98,7 @@ class SignedXml
         // Encode signature
         $signatureValue = base64_encode($signature);
 
-        // Calulate and encode digest value
+        // Calculate and encode digest value
         $digestValue = base64_encode(hash($this->digestAlgorithmName, $data, true));
 
         $xml = $this->createSignedXml($data, $digestValue, $signatureValue);
@@ -199,6 +164,41 @@ class SignedXml
         $xml->documentElement->appendChild($signatureElement);
 
         return $xml;
+    }
+
+    /**
+     * Set digest algorithm.
+     *
+     * @param string $digestAlgorithm sha1, sha224, sha256, sha384, sha512
+     */
+    private function setDigestAlgorithm(string $digestAlgorithm): void
+    {
+        switch ($digestAlgorithm) {
+            case 'sha1':
+                $this->digestAlgorithmUrl = self::SHA1_URL;
+                $this->digestAlgorithm = OPENSSL_ALGO_SHA1;
+                break;
+            case 'sha224':
+                $this->digestAlgorithmUrl = self::SHA224_URL;
+                $this->digestAlgorithm = OPENSSL_ALGO_SHA224;
+                break;
+            case 'sha256':
+                $this->digestAlgorithmUrl = self::SHA256_URL;
+                $this->digestAlgorithm = OPENSSL_ALGO_SHA256;
+                break;
+            case 'sha384':
+                $this->digestAlgorithmUrl = self::SHA384_URL;
+                $this->digestAlgorithm = OPENSSL_ALGO_SHA384;
+                break;
+            case 'sha512':
+                $this->digestAlgorithmUrl = self::SHA512_URL;
+                $this->digestAlgorithm = OPENSSL_ALGO_SHA512;
+                break;
+            default:
+                throw new RuntimeException("Cannot validate digest: Unsupported Algorithm <$digestAlgorithm>");
+        }
+
+        $this->digestAlgorithmName = $digestAlgorithm;
     }
 
     /**

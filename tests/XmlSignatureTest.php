@@ -1,15 +1,15 @@
 <?php
 
-namespace Odan\XmlDSig\Test;
+namespace Selective\XmlDSig\Test;
 
-use Odan\XmlDSig\SignedXml;
-use Odan\XmlDSig\VerifyXml;
+use Selective\XmlDSig\SignedXml;
+use Selective\XmlDSig\VerifyXml;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Test.
  *
- * @coversDefaultClass \Odan\XmlDSig\SignedXml
+ * @coversDefaultClass \Selective\XmlDSig\SignedXml
  */
 class XmlSignatureTest extends TestCase
 {
