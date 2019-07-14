@@ -1,27 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="tests/bootstrap.php"
+<phpunit bootstrap="vendor/autoload.php"
          colors="true"
          backupGlobals="false"
          backupStaticAttributes="false"
-         syntaxCheck="false">
+         timeoutForLargeTests="900">
     <testsuites>
         <testsuite name="Tests">
             <directory suffix="Test.php">tests</directory>
         </testsuite>
     </testsuites>
     <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
+        <whitelist processUncoveredFilesFromWhitelist="false">
             <directory suffix=".php">src</directory>
             <exclude>
-                <directory>bin</directory>
-                <directory>build</directory>
-                <directory>docs</directory>
-                <directory>tmp</directory>
                 <directory>vendor</directory>
+                <directory>build</directory>
             </exclude>
         </whitelist>
     </filter>
-    <php>
-        <const name="APP_ENV" value="integration"/>
-    </php>
 </phpunit>
