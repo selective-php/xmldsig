@@ -82,7 +82,7 @@ final class XmlSigner
      *
      * @param string $filename Input file
      * @param string $outputFilename Output file
-     * @param string $digestAlgorithm sha1, sha224, sha256, sha384, sha512
+     * @param string $digestAlgorithm For example: sha1, sha224, sha256, sha384, sha512
      *
      * @return bool Success
      */
@@ -128,18 +128,22 @@ final class XmlSigner
     /**
      * Create the XML representation of the signature.
      *
-     * @param string $data
-     * @param string $digestValue
-     * @param string $signatureValue
+     * @param string $data The xml content
+     * @param string $digestValue The digest value
+     * @param string $signatureValue The signature
      *
      * @return DOMDocument
      */
-    public function createSignedXml(string $data, string $digestValue, string $signatureValue): DOMDocument
+    private function createSignedXml(string $data, string $digestValue, string $signatureValue): DOMDocument
     {
         $xml = new DOMDocument();
         $xml->preserveWhiteSpace = false;
         $xml->formatOutput = true;
-        $xml->loadXML($data);
+        $isValid = $xml->loadXML($data);
+
+        if (!$isValid || !$xml->documentElement) {
+            throw new RuntimeException('Invalid XML content');
+        }
 
         $signatureElement = $xml->createElement('Signature');
         $signatureElement->setAttribute('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
@@ -186,7 +190,7 @@ final class XmlSigner
     /**
      * Set digest algorithm.
      *
-     * @param string $digestAlgorithm sha1, sha224, sha256, sha384, sha512
+     * @param string $digestAlgorithm For example: sha1, sha224, sha256, sha384, sha512
      */
     private function setDigestAlgorithm(string $digestAlgorithm): void
     {

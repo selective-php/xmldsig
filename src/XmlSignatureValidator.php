@@ -3,6 +3,7 @@
 namespace Selective\XmlDSig;
 
 use DOMDocument;
+use DOMElement;
 use DOMXPath;
 use RuntimeException;
 
@@ -76,11 +77,21 @@ final class XmlSignatureValidator
             throw new RuntimeException('No public key provided');
         }
 
+        $xmlContent = file_get_contents($filename);
+
+        if (!$xmlContent) {
+            throw new RuntimeException(sprintf('File could not be read: %s', $filename));
+        }
+
         // Read the xml file content
         $xml = new DOMDocument();
         $xml->preserveWhiteSpace = false;
         $xml->formatOutput = true;
-        $xml->loadXML(file_get_contents($filename));
+        $isValid = $xml->loadXML($xmlContent);
+
+        if (!$isValid || !$xml->documentElement) {
+            throw new RuntimeException('Invalid XML content');
+        }
 
         $digestAlgorithm = $this->getDigestAlgorithm($xml);
         $signatureValue = $this->getSignatureValue($xml);
@@ -103,11 +114,11 @@ final class XmlSignatureValidator
     /**
      * Detect digest algorithm.
      *
-     * @param DOMDocument $xml
+     * @param DOMDocument $xml The xml document
      *
      * @return string
      */
-    protected function getSignatureValue(DOMDocument $xml): string
+    private function getSignatureValue(DOMDocument $xml): string
     {
         $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
@@ -126,8 +137,12 @@ final class XmlSignatureValidator
             throw new RuntimeException('Verification failed: More that one signature was found for the document.');
         }
 
-        $result = $signatureNodes->item(0)->nodeValue;
-        $result = base64_decode($result);
+        $domNode = $signatureNodes->item(0);
+        if (!$domNode) {
+            throw new RuntimeException('Verification failed: No Signature item was found in the document.');
+        }
+
+        $result = (string)base64_decode($domNode->nodeValue);
 
         return $result;
     }
@@ -135,14 +150,18 @@ final class XmlSignatureValidator
     /**
      * Get the real xml content (without the signature).
      *
-     * @param DOMDocument $xml DOMDocument
+     * @param DOMDocument $xml The xml document
      *
-     * @return string Xml content
+     * @return string The xml content
      */
-    public function getXmlContent(DOMDocument $xml): string
+    private function getXmlContent(DOMDocument $xml): string
     {
         $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
+
+        if (!$xml->documentElement) {
+            throw new RuntimeException('Invalid XML content');
+        }
 
         $signatureNodes = $xpath->query('//xmlns:Signature');
         foreach ($signatureNodes as $signatureNode) {
@@ -151,7 +170,7 @@ final class XmlSignatureValidator
 
         $content = $xml->saveXML();
 
-        if ($content === false) {
+        if (!is_string($content)) {
             throw new RuntimeException('The XML content is not readable');
         }
 
@@ -161,9 +180,9 @@ final class XmlSignatureValidator
     /**
      * Detect digest algorithm.
      *
-     * @param DOMDocument $xml
+     * @param DOMDocument $xml The xml document
      *
-     * @return int
+     * @return int The algorithm code
      */
     protected function getDigestAlgorithm(DOMDocument $xml): int
     {
@@ -184,7 +203,13 @@ final class XmlSignatureValidator
             throw new RuntimeException('Verification failed: More that one signature was found for the document.');
         }
 
-        $algorithm = $signatureMethodNodes->item(0)->getAttribute('Algorithm');
+        /** @var DOMElement $element */
+        $element = $signatureMethodNodes->item(0);
+        if (!$element instanceof DOMElement) {
+            throw new RuntimeException('Verification failed: Signature algorithm was found for the document.');
+        }
+
+        $algorithm = $element->getAttribute('Algorithm');
 
         switch ($algorithm) {
             case self::SHA1_URL:
