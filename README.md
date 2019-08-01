@@ -1,14 +1,16 @@
 # XMLDSIG for PHP
 
-* Sign XML Documents with Digital Signatures ([XMLDSIG](https://www.w3.org/TR/xmldsig-core/))
-* Verify the Digital Signatures of XML Documents
-
 [![Latest Version on Packagist](https://img.shields.io/github/release/selective-php/xmldsig.svg?style=flat-square)](https://packagist.org/packages/selective/xmldsig)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 [![Build Status](https://img.shields.io/travis/selective-php/xmldsig/master.svg?style=flat-square)](https://travis-ci.org/selective-php/xmldsig)
 [![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/selective-php/xmldsig.svg?style=flat-square)](https://scrutinizer-ci.com/g/selective-php/xmldsig/code-structure)
 [![Quality Score](https://img.shields.io/scrutinizer/quality/g/selective-php/xmldsig.svg?style=flat-square)](https://scrutinizer-ci.com/g/selective-php/xmldsig/?branch=master)
 [![Total Downloads](https://img.shields.io/packagist/dt/selective/xmldsig.svg?style=flat-square)](https://packagist.org/packages/selective/xmldsig/stats)
+
+## Features
+
+* Sign XML Documents with Digital Signatures ([XMLDSIG](https://www.w3.org/TR/xmldsig-core/))
+* Verify the Digital Signatures of XML Documents
 
 ## Requirements
 
@@ -41,9 +43,9 @@ Input file: example.xml
 ```php
 use Selective\XmlDSig\XmlSigner;
 
-$xmlSigner = new XmlSigner('sha512');
+$xmlSigner = new XmlSigner();
 $xmlSigner->loadPfx('filename.pfx', 'password');
-$xmlSigner->signXmlFile('example.xml', 'signed-example.xml');
+$xmlSigner->signXmlFile('example.xml', 'signed-example.xml', 'sha512');
 ```
 
 Output file: signed-example.xml
