@@ -16,7 +16,7 @@
 
 * PHP 7.1.3+
 * The openssl extension
-* An X.509 digital certificate
+* A X.509 digital certificate
 
 ## Installation
 
@@ -26,7 +26,7 @@ composer require selective/xmldsig
 
 ## Usage
 
-### Sign XML Documents with Digital Signatures
+### Sign XML Document with Digital Signature
 
 Input file: example.xml
 
