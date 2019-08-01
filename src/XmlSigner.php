@@ -3,7 +3,7 @@
 namespace Selective\XmlDSig;
 
 use DOMDocument;
-use RuntimeException;
+use Selective\XmlDSig\Exception\XmlSignerException;
 
 /**
  * Sign XML Documents with Digital Signatures (XMLDSIG).
@@ -46,31 +46,33 @@ final class XmlSigner
      * @param string $filename PFX filename
      * @param string $password PFX password
      *
+     * @throws XmlSignerException
+     *
      * @return bool Success
      */
     public function loadPfx(string $filename, string $password): bool
     {
         if (!file_exists($filename)) {
-            throw new RuntimeException(sprintf('File not found: %s', $filename));
+            throw new XmlSignerException(sprintf('File not found: %s', $filename));
         }
 
         $certStore = file_get_contents($filename);
 
         if (!$certStore) {
-            throw new RuntimeException(sprintf('File could not be read: %s', $filename));
+            throw new XmlSignerException(sprintf('File could not be read: %s', $filename));
         }
 
         $status = openssl_pkcs12_read($certStore, $certInfo, $password);
 
         if (!$status) {
-            throw new RuntimeException('Invalid PFX pasword');
+            throw new XmlSignerException('Invalid PFX pasword');
         }
 
         // Read the private key
         $this->privateKeyId = openssl_get_privatekey((string)$certInfo['pkey']);
 
         if (!$this->privateKeyId) {
-            throw new RuntimeException('Invalid private key');
+            throw new XmlSignerException('Invalid private key');
         }
 
         return true;
@@ -84,16 +86,18 @@ final class XmlSigner
      * @param string $outputFilename Output file
      * @param string $digestAlgorithm For example: sha1, sha224, sha256, sha384, sha512
      *
+     * @throws XmlSignerException
+     *
      * @return bool Success
      */
     public function signXmlFile(string $filename, string $outputFilename, string $digestAlgorithm): bool
     {
         if (!file_exists($filename)) {
-            throw new RuntimeException(sprintf('File not found: %s', $filename));
+            throw new XmlSignerException(sprintf('File not found: %s', $filename));
         }
 
         if (!$this->privateKeyId) {
-            throw new RuntimeException('No private key provided');
+            throw new XmlSignerException('No private key provided');
         }
 
         $this->setDigestAlgorithm($digestAlgorithm);
@@ -109,7 +113,7 @@ final class XmlSigner
         $status = openssl_sign($data, $signature, $this->privateKeyId, $this->digestAlgorithm);
 
         if (!$status) {
-            throw new RuntimeException('Computing of the signature failed');
+            throw new XmlSignerException('Computing of the signature failed');
         }
 
         // Encode signature
@@ -132,7 +136,9 @@ final class XmlSigner
      * @param string $digestValue The digest value
      * @param string $signatureValue The signature
      *
-     * @return DOMDocument
+     * @throws XmlSignerException
+     *
+     * @return DOMDocument The DOM document
      */
     private function createSignedXml(string $data, string $digestValue, string $signatureValue): DOMDocument
     {
@@ -142,7 +148,7 @@ final class XmlSigner
         $isValid = $xml->loadXML($data);
 
         if (!$isValid || !$xml->documentElement) {
-            throw new RuntimeException('Invalid XML content');
+            throw new XmlSignerException('Invalid XML content');
         }
 
         $signatureElement = $xml->createElement('Signature');
@@ -216,7 +222,7 @@ final class XmlSigner
                 $this->digestAlgorithm = OPENSSL_ALGO_SHA512;
                 break;
             default:
-                throw new RuntimeException("Cannot validate digest: Unsupported Algorithm <$digestAlgorithm>");
+                throw new XmlSignerException("Cannot validate digest: Unsupported Algorithm <$digestAlgorithm>");
         }
 
         $this->digestAlgorithmName = $digestAlgorithm;

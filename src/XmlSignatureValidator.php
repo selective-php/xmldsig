@@ -5,7 +5,7 @@ namespace Selective\XmlDSig;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
-use RuntimeException;
+use Selective\XmlDSig\Exception\XmlSignatureValidatorException;
 
 /**
  * Verify the Digital Signatures of XML Documents.
@@ -30,30 +30,32 @@ final class XmlSignatureValidator
      * @param string $filename PFX filename
      * @param string $password PFX password
      *
+     * @throws XmlSignatureValidatorException
+     *
      * @return bool Success
      */
     public function loadPfx(string $filename, string $password): bool
     {
         if (!file_exists($filename)) {
-            throw new RuntimeException(sprintf('File not found: %s', $filename));
+            throw new XmlSignatureValidatorException(sprintf('File not found: %s', $filename));
         }
 
         $certStore = file_get_contents($filename);
 
         if (!$certStore) {
-            throw new RuntimeException(sprintf('File could not be read: %s', $filename));
+            throw new XmlSignatureValidatorException(sprintf('File could not be read: %s', $filename));
         }
 
         $status = openssl_pkcs12_read($certStore, $certInfo, $password);
 
         if (!$status) {
-            throw new RuntimeException('Invalid PFX pasword');
+            throw new XmlSignatureValidatorException('Invalid PFX pasword');
         }
 
         $this->publicKeyId = openssl_get_publickey($certInfo['cert']);
 
         if (!$this->publicKeyId) {
-            throw new RuntimeException('Invalid public key');
+            throw new XmlSignatureValidatorException('Invalid public key');
         }
 
         return true;
@@ -65,22 +67,24 @@ final class XmlSignatureValidator
      *
      * @param string $filename Input file
      *
+     * @throws XmlSignatureValidatorException
+     *
      * @return bool Success
      */
     public function verifyXmlFile(string $filename): bool
     {
         if (!file_exists($filename)) {
-            throw new RuntimeException(sprintf('File not found: %s', $filename));
+            throw new XmlSignatureValidatorException(sprintf('File not found: %s', $filename));
         }
 
         if (!$this->publicKeyId) {
-            throw new RuntimeException('No public key provided');
+            throw new XmlSignatureValidatorException('No public key provided');
         }
 
         $xmlContent = file_get_contents($filename);
 
         if (!$xmlContent) {
-            throw new RuntimeException(sprintf('File could not be read: %s', $filename));
+            throw new XmlSignatureValidatorException(sprintf('File could not be read: %s', $filename));
         }
 
         // Read the xml file content
@@ -90,7 +94,7 @@ final class XmlSignatureValidator
         $isValid = $xml->loadXML($xmlContent);
 
         if (!$isValid || !$xml->documentElement) {
-            throw new RuntimeException('Invalid XML content');
+            throw new XmlSignatureValidatorException('Invalid XML content');
         }
 
         $digestAlgorithm = $this->getDigestAlgorithm($xml);
@@ -108,7 +112,7 @@ final class XmlSignatureValidator
             return false;
         }
 
-        throw new RuntimeException('Error checking signature');
+        throw new XmlSignatureValidatorException('Error checking signature');
     }
 
     /**
@@ -116,7 +120,9 @@ final class XmlSignatureValidator
      *
      * @param DOMDocument $xml The xml document
      *
-     * @return string
+     * @throws XmlSignatureValidatorException
+     *
+     * @return string The signature value
      */
     private function getSignatureValue(DOMDocument $xml): string
     {
@@ -128,18 +134,18 @@ final class XmlSignatureValidator
 
         // Throw an exception if no signature was found.
         if ($signatureNodes->length < 1) {
-            throw new RuntimeException('Verification failed: No Signature was found in the document.');
+            throw new XmlSignatureValidatorException('Verification failed: No Signature was found in the document.');
         }
 
         // We only support one signature for the entire XML document.
         // Throw an exception if more than one signature was found.
         if ($signatureNodes->length > 1) {
-            throw new RuntimeException('Verification failed: More that one signature was found for the document.');
+            throw new XmlSignatureValidatorException('Verification failed: More that one signature was found for the document.');
         }
 
         $domNode = $signatureNodes->item(0);
         if (!$domNode) {
-            throw new RuntimeException('Verification failed: No Signature item was found in the document.');
+            throw new XmlSignatureValidatorException('Verification failed: No Signature item was found in the document.');
         }
 
         $result = (string)base64_decode($domNode->nodeValue);
@@ -160,7 +166,7 @@ final class XmlSignatureValidator
         $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
         if (!$xml->documentElement) {
-            throw new RuntimeException('Invalid XML content');
+            throw new XmlSignatureValidatorException('Invalid XML content');
         }
 
         $signatureNodes = $xpath->query('//xmlns:Signature');
@@ -171,7 +177,7 @@ final class XmlSignatureValidator
         $content = $xml->saveXML();
 
         if (!is_string($content)) {
-            throw new RuntimeException('The XML content is not readable');
+            throw new XmlSignatureValidatorException('The XML content is not readable');
         }
 
         return $content;
@@ -181,6 +187,8 @@ final class XmlSignatureValidator
      * Detect digest algorithm.
      *
      * @param DOMDocument $xml The xml document
+     *
+     * @throws XmlSignatureValidatorException
      *
      * @return int The algorithm code
      */
@@ -194,19 +202,19 @@ final class XmlSignatureValidator
 
         // Throw an exception if no signature was found.
         if ($signatureMethodNodes->length < 1) {
-            throw new RuntimeException('Verification failed: No Signature was found in the document.');
+            throw new XmlSignatureValidatorException('Verification failed: No Signature was found in the document.');
         }
 
         // We only support one signature for the entire XML document.
         // Throw an exception if more than one signature was found.
         if ($signatureMethodNodes->length > 1) {
-            throw new RuntimeException('Verification failed: More that one signature was found for the document.');
+            throw new XmlSignatureValidatorException('Verification failed: More that one signature was found for the document.');
         }
 
         /** @var DOMElement $element */
         $element = $signatureMethodNodes->item(0);
         if (!$element instanceof DOMElement) {
-            throw new RuntimeException('Verification failed: Signature algorithm was found for the document.');
+            throw new XmlSignatureValidatorException('Verification failed: Signature algorithm was found for the document.');
         }
 
         $algorithm = $element->getAttribute('Algorithm');
@@ -228,7 +236,7 @@ final class XmlSignatureValidator
                 return OPENSSL_ALGO_SHA512;
                 break;
             default:
-                throw new RuntimeException("Cannot verify: Unsupported Algorithm <$algorithm>");
+                throw new XmlSignatureValidatorException("Cannot verify: Unsupported Algorithm <$algorithm>");
         }
     }
 
