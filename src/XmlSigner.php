@@ -41,6 +41,11 @@ final class XmlSigner
     private $privateKeyId;
 
     /**
+     * @var string
+     */
+    private $referenceURI = '';
+
+    /**
      * Read and load the pfx file.
      *
      * @param string $filename PFX filename
@@ -129,6 +134,19 @@ final class XmlSigner
         return true;
     }
 
+    public function setReferenceURI(string $referenceURI) : self
+    {
+        $this->referenceURI = $referenceURI;
+        return $this;
+    }
+
+    private function getReferenceURI() : string
+    {
+        $referenceURI = $this->referenceURI;
+        $this->referenceURI = '';
+        return $referenceURI;
+    }
+
     /**
      * Create the XML representation of the signature.
      *
@@ -166,7 +184,7 @@ final class XmlSigner
         $signedInfoElement->appendChild($signatureMethodElement);
 
         $referenceElement = $xml->createElement('Reference');
-        $referenceElement->setAttribute('URI', '');
+        $referenceElement->setAttribute('URI', $this->getReferenceURI());
         $signedInfoElement->appendChild($referenceElement);
 
         $transformsElement = $xml->createElement('Transforms');
