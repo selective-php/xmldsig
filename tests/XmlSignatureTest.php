@@ -49,6 +49,7 @@ class XmlSignatureTest extends TestCase
 
             $signedXml = new XmlSigner();
             $signedXml->loadPfx($pfxFilename, $password);
+            $signedXml->setReferenceUri('');
             $success = $signedXml->signXmlFile($filename, $outputFilename, $algo);
 
             $this->assertTrue($success);

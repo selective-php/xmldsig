@@ -43,7 +43,7 @@ final class XmlSigner
     /**
      * @var string
      */
-    private $referenceURI = '';
+    private $referenceUri = '';
 
     /**
      * Read and load the pfx file.
@@ -134,17 +134,16 @@ final class XmlSigner
         return true;
     }
 
-    public function setReferenceURI(string $referenceURI) : self
+    /**
+     * Set reference URI.
+     *
+     * @param string $referenceUri The reference URI
+     *
+     * @return void
+     */
+    public function setReferenceUri(string $referenceUri)
     {
-        $this->referenceURI = $referenceURI;
-        return $this;
-    }
-
-    private function getReferenceURI() : string
-    {
-        $referenceURI = $this->referenceURI;
-        $this->referenceURI = '';
-        return $referenceURI;
+        $this->referenceUri = $referenceUri;
     }
 
     /**
@@ -184,7 +183,7 @@ final class XmlSigner
         $signedInfoElement->appendChild($signatureMethodElement);
 
         $referenceElement = $xml->createElement('Reference');
-        $referenceElement->setAttribute('URI', $this->getReferenceURI());
+        $referenceElement->setAttribute('URI', $this->referenceUri);
         $signedInfoElement->appendChild($referenceElement);
 
         $transformsElement = $xml->createElement('Transforms');

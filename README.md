@@ -45,6 +45,10 @@ use Selective\XmlDSig\XmlSigner;
 
 $xmlSigner = new XmlSigner();
 $xmlSigner->loadPfx('filename.pfx', 'password');
+
+// Optional: Set reference URI
+$xmlSigner->setReferenceUri('');
+
 $xmlSigner->signXmlFile('example.xml', 'signed-example.xml', 'sha512');
 ```
 
