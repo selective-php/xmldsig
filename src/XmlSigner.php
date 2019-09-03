@@ -74,7 +74,7 @@ final class XmlSigner
         }
 
         // Read the private key
-        $this->privateKeyId = openssl_get_privatekey((string)$certInfo['pkey']);
+        $this->privateKeyId = openssl_pkey_get_private((string)$certInfo['pkey']);
 
         if (!$this->privateKeyId) {
             throw new XmlSignerException('Invalid private key');
