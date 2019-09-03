@@ -70,7 +70,7 @@ final class XmlSigner
         $status = openssl_pkcs12_read($certStore, $certInfo, $password);
 
         if (!$status) {
-            throw new XmlSignerException('Invalid PFX pasword');
+            throw new XmlSignerException('Invalid PFX password');
         }
 
         // Read the private key
