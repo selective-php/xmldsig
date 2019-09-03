@@ -2,6 +2,7 @@
 
 namespace Selective\XmlDSig\Test;
 
+use Selective\XmlDSig\DigestAlgorithmType;
 use Selective\XmlDSig\XmlSigner;
 use Selective\XmlDSig\XmlSignatureValidator;
 use PHPUnit\Framework\TestCase;
@@ -35,8 +36,14 @@ class XmlSignatureTest extends TestCase
         $outputFilename = __DIR__ . '/signed-example.xml';
 
         $password = '12345678';
-        $algos = ['sha1', 'sha224', 'sha256', 'sha384', 'sha512'];
-        //$algos = ['sha512'];
+
+        $algos = [
+            DigestAlgorithmType::SHA1,
+            DigestAlgorithmType::SHA224,
+            DigestAlgorithmType::SHA256,
+            DigestAlgorithmType::SHA384,
+            DigestAlgorithmType::SHA512,
+        ];
 
         $this->assertFileExists($filename);
 
