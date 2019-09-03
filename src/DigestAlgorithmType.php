@@ -3,7 +3,7 @@
 namespace Selective\XmlDSig;
 
 /**
- * DigestAlgorithmType
+ * DigestAlgorithmType.
  */
 final class DigestAlgorithmType
 {
