@@ -150,6 +150,10 @@ final class XmlSignatureValidator
 
         $result = (string)base64_decode($domNode->nodeValue);
 
+        if ($result === false) {
+            throw new XmlSignatureValidatorException('Verification failed: Invalid base64 data.');
+        }
+
         return $result;
     }
 
