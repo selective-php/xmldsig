@@ -49,7 +49,7 @@ final class XmlSignatureValidator
         $status = openssl_pkcs12_read($certStore, $certInfo, $password);
 
         if (!$status) {
-            throw new XmlSignatureValidatorException('Invalid PFX pasword');
+            throw new XmlSignatureValidatorException('Invalid PFX password');
         }
 
         $this->publicKeyId = openssl_get_publickey($certInfo['cert']);
