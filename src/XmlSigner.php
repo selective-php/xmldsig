@@ -11,24 +11,39 @@ use Selective\XmlDSig\Exception\XmlSignerException;
 final class XmlSigner
 {
     //
-    // RSA (PKCS#1 v1.5) Identifier
+    // Signature Algorithm Identifiers, RSA (PKCS#1 v1.5)
     // https://www.w3.org/TR/xmldsig-core/#sec-PKCS1
     //
-    private const SHA1_URL = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1';
-    private const SHA224_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha224';
-    private const SHA256_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
-    private const SHA384_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384';
-    private const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
+    private const SIGNATURE_SHA1_URL = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1';
+    private const SIGNATURE_SHA224_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha224';
+    private const SIGNATURE_SHA256_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+    private const SIGNATURE_SHA384_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384';
+    private const SIGNATURE_SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
+
+    //
+    // Digest Algorithm Identifiers
+    // https://www.w3.org/TR/xmldsig-core/#sec-AlgID
+    //
+    private const DIGEST_SHA1_URL = 'http://www.w3.org/2000/09/xmldsig#sha1';
+    private const DIGEST_SHA224_URL = 'http://www.w3.org/2001/04/xmldsig-more#sha224';
+    private const DIGEST_SHA256_URL = 'http://www.w3.org/2001/04/xmlenc#sha256';
+    private const DIGEST_SHA384_URL = 'http://www.w3.org/2001/04/xmldsig-more#sha384';
+    private const DIGEST_SHA512_URL = 'http://www.w3.org/2001/04/xmlenc#sha512';
 
     /**
      * @var int
      */
-    private $digestAlgorithm;
+    private $sslAlgorithm;
 
     /**
      * @var string
      */
-    private $digestAlgorithmName;
+    private $algorithmName;
+
+    /**
+     * @var string
+     */
+    private $signatureAlgorithmUrl;
 
     /**
      * @var string
@@ -89,13 +104,13 @@ final class XmlSigner
      *
      * @param string $filename Input file
      * @param string $outputFilename Output file
-     * @param string $digestAlgorithm For example: sha1, sha224, sha256, sha384, sha512
+     * @param string $algorithm For example: sha1, sha224, sha256, sha384, sha512
      *
      * @throws XmlSignerException
      *
      * @return bool Success
      */
-    public function signXmlFile(string $filename, string $outputFilename, string $digestAlgorithm): bool
+    public function signXmlFile(string $filename, string $outputFilename, string $algorithm): bool
     {
         if (!file_exists($filename)) {
             throw new XmlSignerException(sprintf('File not found: %s', $filename));
@@ -105,7 +120,7 @@ final class XmlSigner
             throw new XmlSignerException('No private key provided');
         }
 
-        $this->setDigestAlgorithm($digestAlgorithm);
+        $this->setAlgorithm($algorithm);
 
         // Read the xml file content
         $xml = new DOMDocument();
@@ -115,7 +130,7 @@ final class XmlSigner
         $data = $xml->saveXML();
 
         // Compute signature with SHA-512
-        $status = openssl_sign($data, $signature, $this->privateKeyId, $this->digestAlgorithm);
+        $status = openssl_sign($data, $signature, $this->privateKeyId, $this->sslAlgorithm);
 
         if (!$status) {
             throw new XmlSignerException('Computing of the signature failed');
@@ -125,7 +140,7 @@ final class XmlSigner
         $signatureValue = base64_encode($signature);
 
         // Calculate and encode digest value
-        $digestValue = base64_encode(hash($this->digestAlgorithmName, $data, true));
+        $digestValue = base64_encode(hash($this->algorithmName, $data, true));
 
         $xml = $this->createSignedXml($data, $digestValue, $signatureValue);
 
@@ -179,7 +194,7 @@ final class XmlSigner
         $signedInfoElement->appendChild($canonicalizationMethodElement);
 
         $signatureMethodElement = $xml->createElement('SignatureMethod');
-        $signatureMethodElement->setAttribute('Algorithm', $this->digestAlgorithmUrl);
+        $signatureMethodElement->setAttribute('Algorithm', $this->signatureAlgorithmUrl);
         $signedInfoElement->appendChild($signatureMethodElement);
 
         $referenceElement = $xml->createElement('Reference');
@@ -211,38 +226,43 @@ final class XmlSigner
     }
 
     /**
-     * Set digest algorithm.
+     * Set signature and digest algorithm.
      *
-     * @param string $digestAlgorithm For example: sha1, sha224, sha256, sha384, sha512
+     * @param string $algorithm For example: sha1, sha224, sha256, sha384, sha512
      */
-    private function setDigestAlgorithm(string $digestAlgorithm): void
+    private function setAlgorithm(string $algorithm): void
     {
-        switch ($digestAlgorithm) {
+        switch ($algorithm) {
             case 'sha1':
-                $this->digestAlgorithmUrl = self::SHA1_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA1;
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA1_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA1_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA1;
                 break;
             case 'sha224':
-                $this->digestAlgorithmUrl = self::SHA224_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA224;
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA224_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA224_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA224;
                 break;
             case 'sha256':
-                $this->digestAlgorithmUrl = self::SHA256_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA256;
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA256_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA256_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA256;
                 break;
             case 'sha384':
-                $this->digestAlgorithmUrl = self::SHA384_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA384;
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA384_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA384_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA384;
                 break;
             case 'sha512':
-                $this->digestAlgorithmUrl = self::SHA512_URL;
-                $this->digestAlgorithm = OPENSSL_ALGO_SHA512;
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA512_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA512_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA512;
                 break;
             default:
-                throw new XmlSignerException("Cannot validate digest: Unsupported Algorithm <$digestAlgorithm>");
+                throw new XmlSignerException("Cannot validate digest: Unsupported algorithm <$algorithm>");
         }
 
-        $this->digestAlgorithmName = $digestAlgorithm;
+        $this->algorithmName = $algorithm;
     }
 
     /**
