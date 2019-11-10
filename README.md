@@ -99,8 +99,8 @@ if ($isValid) {
 
 Try these excellent online tools to verify XML signatures:
 
-* [https://www.aleksey.com/xmlsec/xmldsig-verifier.html](Alekseys Online XML Digital Signature Verifer)
-* [https://tools.chilkat.io/xmlDsigVerify.cshtml](Chilkat XML Digital Signature Verification)
+* https://www.aleksey.com/xmlsec/xmldsig-verifier.html
+* https://tools.chilkat.io/xmlDsigVerify.cshtml
 
 ## License
 
