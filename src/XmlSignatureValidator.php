@@ -34,7 +34,7 @@ final class XmlSignatureValidator
      *
      * @return bool Success
      */
-    public function loadPfx(string $filename, string $password): bool
+    public function loadPfxFile(string $filename, string $password): bool
     {
         if (!file_exists($filename)) {
             throw new XmlSignatureValidatorException(sprintf('File not found: %s', $filename));
@@ -62,8 +62,40 @@ final class XmlSignatureValidator
     }
 
     /**
+     * Read and load the public key file.
+     *
+     * @param string $filename the public key file
+     *
+     * @throws XmlSignatureValidatorException
+     *
+     * @return bool Success
+     */
+    public function loadPublicKeyFile(string $filename): bool
+    {
+        if (!file_exists($filename)) {
+            throw new XmlSignatureValidatorException(sprintf('File not found: %s', $filename));
+        }
+
+        $certStore = file_get_contents($filename);
+
+        if (!$certStore) {
+            throw new XmlSignatureValidatorException(sprintf('File could not be read: %s', $filename));
+        }
+
+        $this->publicKeyId = openssl_get_publickey($certStore);
+
+        if (!$this->publicKeyId) {
+            throw new XmlSignatureValidatorException('Invalid public key');
+        }
+
+        return true;
+    }
+
+    /**
      * Sign an XML file and save the signature in a new file.
      * This method does not save the public key within the XML file.
+     *
+     * https://www.xml.com/pub/a/2001/08/08/xmldsig.html#verify
      *
      * @param string $filename Input file
      *
@@ -89,8 +121,8 @@ final class XmlSignatureValidator
 
         // Read the xml file content
         $xml = new DOMDocument();
-        $xml->preserveWhiteSpace = false;
-        $xml->formatOutput = true;
+        $xml->preserveWhiteSpace = true;
+        $xml->formatOutput = false;
         $isValid = $xml->loadXML($xmlContent);
 
         if (!$isValid || !$xml->documentElement) {
@@ -99,24 +131,53 @@ final class XmlSignatureValidator
 
         $digestAlgorithm = $this->getDigestAlgorithm($xml);
         $signatureValue = $this->getSignatureValue($xml);
-        $data = $this->getXmlContent($xml);
+        $xpath = new DOMXPath($xml);
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
-        $status = openssl_verify($data, $signatureValue, $this->publicKeyId, $digestAlgorithm);
+        /** @var DOMElement $signedInfoNode */
+        foreach ($xpath->evaluate('//xmlns:Signature/xmlns:SignedInfo') as $signedInfoNode) {
+            // Remove SignatureValue value
+            $signatureValueElement = $xpath->query('//xmlns:SignatureValue', $signedInfoNode)->item(0);
+            $signatureValueElement->nodeValue = '';
 
-        if ($status === 1) {
-            // The XML signature is valid
-            return true;
+            $canonicalData = $signedInfoNode->C14N(true, false);
+
+            $xml2 = new DOMDocument();
+            $xml2->preserveWhiteSpace = true;
+            $xml2->formatOutput = true;
+            $xml2->loadXML($canonicalData);
+            $canonicalData = $xml2->C14N(true, false);
+
+            $status = openssl_verify($canonicalData, $signatureValue, $this->publicKeyId, $digestAlgorithm);
+
+            if ($status === 1) {
+                // The XML signature is valid
+                return true;
+            }
+            if ($status === 0) {
+                // The XML signature is not valid
+                return false;
+            }
+
+            throw new XmlSignatureValidatorException('Error checking signature');
         }
-        if ($status === 0) {
-            // The XML signature is not valid
-            return false;
-        }
 
-        throw new XmlSignatureValidatorException('Error checking signature');
+        // @todo check digest value
+        //$digestValue = $this->getDigestValue($xml);
+        //$signatureNodes = $xpath->query('//xmlns:Signature');
+
+        // Canonicalize the content, exclusive and without comments
+        //$canonicalData = $xml->documentElement->C14N(true, false);
+
+        //foreach ($xpath->evaluate('//xmlns:Signature/xmlns:SignedInfo') as $signedInfoNode) {
+        // $signedInfoNode->parentNode->removeChild($signedInfoNode);
+        // }
+
+        return false;
     }
 
     /**
-     * Detect digest algorithm.
+     * Get signature value.
      *
      * @param DOMDocument $xml The xml document
      *
@@ -129,8 +190,50 @@ final class XmlSignatureValidator
         $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
-        // Find the "Signature" node and create a new
+        // Find the SignatureValue node
         $signatureNodes = $xpath->query('//xmlns:Signature/xmlns:SignatureValue');
+
+        // Throw an exception if no signature was found.
+        if ($signatureNodes->length < 1) {
+            throw new XmlSignatureValidatorException('Verification failed: No Signature was found in the document.');
+        }
+
+        // We only support one signature for the entire XML document.
+        // Throw an exception if more than one signature was found.
+        if ($signatureNodes->length > 1) {
+            throw new XmlSignatureValidatorException('Verification failed: More that one signature was found for the document.');
+        }
+
+        $domNode = $signatureNodes->item(0);
+        if (!$domNode) {
+            throw new XmlSignatureValidatorException('Verification failed: No Signature item was found in the document.');
+        }
+
+        $result = (string)base64_decode($domNode->nodeValue);
+
+        if ($result === false) {
+            throw new XmlSignatureValidatorException('Verification failed: Invalid base64 data.');
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get the digest value.
+     *
+     * @param DOMDocument $xml The xml document
+     *
+     * @throws XmlSignatureValidatorException
+     *
+     * @return string The signature value
+     */
+    private function getDigestValue(DOMDocument $xml): string
+    {
+        $xpath = new DOMXPath($xml);
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
+
+        // Find the DigestValue node
+        $signatureNodes = $xpath->query('//xmlns:Signature/xmlns:SignedInfo/xmlns:Reference/xmlns:DigestValue');
 
         // Throw an exception if no signature was found.
         if ($signatureNodes->length < 1) {

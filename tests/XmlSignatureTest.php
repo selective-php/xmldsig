@@ -2,10 +2,10 @@
 
 namespace Selective\XmlDSig\Test;
 
-use Selective\XmlDSig\DigestAlgorithmType;
-use Selective\XmlDSig\XmlSigner;
-use Selective\XmlDSig\XmlSignatureValidator;
 use PHPUnit\Framework\TestCase;
+use Selective\XmlDSig\DigestAlgorithmType;
+use Selective\XmlDSig\XmlSignatureValidator;
+use Selective\XmlDSig\XmlSigner;
 
 /**
  * Test.
@@ -27,15 +27,24 @@ class XmlSignatureTest extends TestCase
     /**
      * Test.
      *
+     * @dataProvider providerTestSignAndVerify
+     *
+     * @param string $privateKeyFile The key file
+     * @param string $password The file password
+     * @param string $publicKeyFile
+     *
      * @return void
      */
-    public function testSignAndVerify()
+    public function testSignAndVerify(string $privateKeyFile, string $publicKeyFile, string $password)
     {
-        $pfxFilename = __DIR__ . '/localhost.pfx';
-        $filename = __DIR__ . '/example.xml';
-        $outputFilename = __DIR__ . '/signed-example.xml';
+        $files = [
+            __DIR__ . '/example1.xml',
+            __DIR__ . '/example2.xml',
+            __DIR__ . '/example3.xml',
+            __DIR__ . '/example4.xml',
+        ];
 
-        $password = '12345678';
+        $outputFilename = __DIR__ . '/signed-example.xml';
 
         $algos = [
             DigestAlgorithmType::SHA1,
@@ -45,29 +54,73 @@ class XmlSignatureTest extends TestCase
             DigestAlgorithmType::SHA512,
         ];
 
-        $this->assertFileExists($filename);
+        foreach ($files as $filename) {
+            $this->assertFileExists($filename);
 
-        foreach ($algos as $algo) {
-            if (file_exists($outputFilename)) {
-                unlink($outputFilename);
+            foreach ($algos as $algo) {
+                if (file_exists($outputFilename)) {
+                    unlink($outputFilename);
+                }
+
+                $this->assertFileNotExists($outputFilename);
+
+                $signedXml = new XmlSigner();
+
+                if (pathinfo($privateKeyFile, PATHINFO_EXTENSION) === 'pfx') {
+                    $signedXml->loadPfxFile($privateKeyFile, $password);
+                } else {
+                    $signedXml->loadPrivateKeyFile($privateKeyFile, $password);
+                }
+
+                $signedXml->setReferenceUri('');
+                $success = $signedXml->signXmlFile($filename, $outputFilename, $algo);
+
+                $this->assertTrue($success);
+                $this->assertFileExists($outputFilename);
+
+                // verify
+                $verifyXml = new XmlSignatureValidator();
+
+                if (pathinfo($publicKeyFile, PATHINFO_EXTENSION) === 'pfx') {
+                    $verifyXml->loadPfxFile($publicKeyFile, $password);
+                } else {
+                    $verifyXml->loadPublicKeyFile($publicKeyFile);
+                }
+
+                $isValid = $verifyXml->verifyXmlFile($outputFilename);
+
+                $this->assertTrue($isValid);
             }
-
-            $this->assertFileNotExists($outputFilename);
-
-            $signedXml = new XmlSigner();
-            $signedXml->loadPfx($pfxFilename, $password);
-            $signedXml->setReferenceUri('');
-            $success = $signedXml->signXmlFile($filename, $outputFilename, $algo);
-
-            $this->assertTrue($success);
-            $this->assertFileExists($outputFilename);
-
-            // verify
-            $verifyXml = new XmlSignatureValidator();
-            $verifyXml->loadPfx($pfxFilename, $password);
-            $isValid = $verifyXml->verifyXmlFile($outputFilename);
-
-            $this->assertTrue($isValid);
         }
+    }
+
+    /**
+     * Provide.
+     *
+     * @return array The data
+     */
+    public function providerTestSignAndVerify()
+    {
+        $keyFiles = [];
+
+        $keyFiles[] = [
+            // Private and public key bundle
+            __DIR__ . '/localhost.pfx',
+            __DIR__ . '/localhost.pfx',
+            '12345678',
+        ];
+
+        // https://github.com/lsh123/xmlsec/tree/master/tests/keys
+        // https://raw.githubusercontent.com/lsh123/xmlsec/fdb11bf0ab6b61cbb475c6f8154b84ae2e435411/tests/keys/cakey.pem
+        // https://www.aleksey.com/xmlsec/xmldsig-verifier.html
+        // https://tools.chilkat.io/xmlDsigVerify.cshtml
+        $keyFiles[] = [
+            // Root CA private key
+            __DIR__ . '/cakey.pem',
+            __DIR__ . '/cacert.pem',
+            'secret',
+        ];
+
+        return $keyFiles;
     }
 }

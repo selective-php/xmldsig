@@ -45,7 +45,7 @@ use Selective\XmlDSig\DigestAlgorithmType;
 use Selective\XmlDSig\XmlSigner;
 
 $xmlSigner = new XmlSigner();
-$xmlSigner->loadPfx('filename.pfx', 'password');
+$xmlSigner->loadPfxFile('filename.pfx', 'password');
 
 // Optional: Set reference URI
 $xmlSigner->setReferenceUri('');
@@ -70,7 +70,7 @@ Output file: signed-example.xml
             <Transforms>
                 <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
             </Transforms>
-            <DigestMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"/>
+            <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"/>
             <DigestValue>Base64EncodedValue==</DigestValue>
         </Reference>
     </SignedInfo>
@@ -94,6 +94,13 @@ if ($isValid) {
     echo 'The XML signature is not valid.';
 }
 ```
+
+### Online XML Digital Signature Verifer
+
+Try these excellent online tools to verify XML signatures:
+
+* [https://www.aleksey.com/xmlsec/xmldsig-verifier.html](Alekseys Online XML Digital Signature Verifer)
+* [https://tools.chilkat.io/xmlDsigVerify.cshtml](Chilkat XML Digital Signature Verification)
 
 ## License
 

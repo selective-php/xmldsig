@@ -39,3 +39,6 @@
 *.ttf binary
 *.woff binary
 *.woff2 binary
+*.pfx
+*.pem
+*.xml

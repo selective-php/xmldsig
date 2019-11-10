@@ -1,0 +1,13 @@
+<References>
+    <Book>
+        <Author>
+            <FirstName>Bruce</FirstName>
+            <LastName>Schneier</LastName>
+        </Author>
+        <Title>Applied Cryptography</Title>
+    </Book>
+    <Web>
+        <Title>XMLSec</Title>
+        <Url>http://www.aleksey.com/xmlsec/</Url>
+    </Web>
+</References>
