@@ -112,6 +112,10 @@ Try these excellent online tools to verify XML signatures:
 * https://www.aleksey.com/xmlsec/xmldsig-verifier.html
 * https://tools.chilkat.io/xmlDsigVerify.cshtml
 
+## Similar libraries
+
+* https://github.com/robrichards/xmlseclibs
+
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE) for more information.
