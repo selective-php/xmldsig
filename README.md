@@ -45,7 +45,11 @@ use Selective\XmlDSig\DigestAlgorithmType;
 use Selective\XmlDSig\XmlSigner;
 
 $xmlSigner = new XmlSigner();
+
 $xmlSigner->loadPfxFile('filename.pfx', 'password');
+
+// or load a PEM file
+//$xmlSigner->loadPrivateKeyFile('filename.pem', 'password');
 
 // Optional: Set reference URI
 $xmlSigner->setReferenceUri('');
@@ -85,7 +89,13 @@ Output file: signed-example.xml
 use Selective\XmlDSig\XmlSignatureValidator;
 
 $signatureValidator = new XmlSignatureValidator();
-$signatureValidator->loadPfx('filename.pfx', 'password');
+
+// Load a PFX file
+$signatureValidator->loadPfxFile('filename.pfx', 'password');
+
+// or load just a public key file
+//$signatureValidator->loadPublicKeyFile('cacert.pem', 'password');
+
 $isValid = $signatureValidator->verifyXmlFile('signed-example.xml');
 
 if ($isValid) {
@@ -95,7 +105,7 @@ if ($isValid) {
 }
 ```
 
-### Online XML Digital Signature Verifer
+### Online XML Digital Signature Verifier
 
 Try these excellent online tools to verify XML signatures:
 

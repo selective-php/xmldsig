@@ -64,7 +64,7 @@ final class XmlSignatureValidator
     /**
      * Read and load the public key file.
      *
-     * @param string $filename the public key file
+     * @param string $filename The public key file
      *
      * @throws XmlSignatureValidatorException
      *
