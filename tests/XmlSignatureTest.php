@@ -30,8 +30,8 @@ class XmlSignatureTest extends TestCase
      * @dataProvider providerTestSignAndVerify
      *
      * @param string $privateKeyFile The key file
+     * @param string $publicKeyFile The key file
      * @param string $password The file password
-     * @param string $publicKeyFile
      *
      * @return void
      */
@@ -97,9 +97,9 @@ class XmlSignatureTest extends TestCase
     /**
      * Provide.
      *
-     * @return array The data
+     * @return array<int, mixed> The data
      */
-    public function providerTestSignAndVerify()
+    public function providerTestSignAndVerify(): array
     {
         $keyFiles = [];
 

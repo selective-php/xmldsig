@@ -16,13 +16,29 @@ final class XmlSignatureValidator
     // RSA (PKCS#1 v1.5) Identifier
     // https://www.w3.org/TR/xmldsig-core/#sec-PKCS1
     //
-    const SHA1_URL = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1';
-    const SHA224_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha224';
-    const SHA256_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
-    const SHA384_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384';
-    const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
+    private const SHA1_URL = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1';
+    private const SHA224_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha224';
+    private const SHA256_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+    private const SHA384_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha384';
+    private const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
 
+    /**
+     * @var resource|false
+     */
     private $publicKeyId;
+
+    /**
+     * @var XmlReader
+     */
+    private $xmlReader;
+
+    /**
+     * The constructor.
+     */
+    public function __construct()
+    {
+        $this->xmlReader = new XmlReader();
+    }
 
     /**
      * Read and load the pfx file.
@@ -137,7 +153,7 @@ final class XmlSignatureValidator
         /** @var DOMElement $signedInfoNode */
         foreach ($xpath->evaluate('//xmlns:Signature/xmlns:SignedInfo') as $signedInfoNode) {
             // Remove SignatureValue value
-            $signatureValueElement = $xpath->query('//xmlns:SignatureValue', $signedInfoNode)->item(0);
+            $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//xmlns:SignatureValue', $signedInfoNode);
             $signatureValueElement->nodeValue = '';
 
             $canonicalData = $signedInfoNode->C14N(true, false);
@@ -194,28 +210,32 @@ final class XmlSignatureValidator
         $signatureNodes = $xpath->query('//xmlns:Signature/xmlns:SignatureValue');
 
         // Throw an exception if no signature was found.
-        if ($signatureNodes->length < 1) {
+        if (!$signatureNodes || $signatureNodes->length < 1) {
             throw new XmlSignatureValidatorException('Verification failed: No Signature was found in the document.');
         }
 
         // We only support one signature for the entire XML document.
         // Throw an exception if more than one signature was found.
         if ($signatureNodes->length > 1) {
-            throw new XmlSignatureValidatorException('Verification failed: More that one signature was found for the document.');
+            throw new XmlSignatureValidatorException(
+                'Verification failed: More that one signature was found for the document.'
+            );
         }
 
         $domNode = $signatureNodes->item(0);
         if (!$domNode) {
-            throw new XmlSignatureValidatorException('Verification failed: No Signature item was found in the document.');
+            throw new XmlSignatureValidatorException(
+                'Verification failed: No Signature item was found in the document.'
+            );
         }
 
-        $result = (string)base64_decode($domNode->nodeValue);
+        $result = base64_decode($domNode->nodeValue, true);
 
         if ($result === false) {
             throw new XmlSignatureValidatorException('Verification failed: Invalid base64 data.');
         }
 
-        return $result;
+        return (string)$result;
     }
 
     /**
@@ -236,58 +256,32 @@ final class XmlSignatureValidator
         $signatureNodes = $xpath->query('//xmlns:Signature/xmlns:SignedInfo/xmlns:Reference/xmlns:DigestValue');
 
         // Throw an exception if no signature was found.
-        if ($signatureNodes->length < 1) {
+        if (!$signatureNodes || $signatureNodes->length < 1) {
             throw new XmlSignatureValidatorException('Verification failed: No Signature was found in the document.');
         }
 
         // We only support one signature for the entire XML document.
         // Throw an exception if more than one signature was found.
         if ($signatureNodes->length > 1) {
-            throw new XmlSignatureValidatorException('Verification failed: More that one signature was found for the document.');
+            throw new XmlSignatureValidatorException(
+                'Verification failed: More that one signature was found for the document.'
+            );
         }
 
         $domNode = $signatureNodes->item(0);
         if (!$domNode) {
-            throw new XmlSignatureValidatorException('Verification failed: No Signature item was found in the document.');
+            throw new XmlSignatureValidatorException(
+                'Verification failed: No Signature item was found in the document.'
+            );
         }
 
-        $result = (string)base64_decode($domNode->nodeValue);
+        $result = base64_decode($domNode->nodeValue, true);
 
         if ($result === false) {
             throw new XmlSignatureValidatorException('Verification failed: Invalid base64 data.');
         }
 
-        return $result;
-    }
-
-    /**
-     * Get the real xml content (without the signature).
-     *
-     * @param DOMDocument $xml The xml document
-     *
-     * @return string The xml content
-     */
-    private function getXmlContent(DOMDocument $xml): string
-    {
-        $xpath = new DOMXPath($xml);
-        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
-
-        if (!$xml->documentElement) {
-            throw new XmlSignatureValidatorException('Invalid XML content');
-        }
-
-        $signatureNodes = $xpath->query('//xmlns:Signature');
-        foreach ($signatureNodes as $signatureNode) {
-            $xml->documentElement->removeChild($signatureNode);
-        }
-
-        $content = $xml->saveXML();
-
-        if (!is_string($content)) {
-            throw new XmlSignatureValidatorException('The XML content is not readable');
-        }
-
-        return $content;
+        return (string)$result;
     }
 
     /**
@@ -308,20 +302,24 @@ final class XmlSignatureValidator
         $signatureMethodNodes = $xpath->query('//xmlns:Signature/xmlns:SignedInfo/xmlns:SignatureMethod');
 
         // Throw an exception if no signature was found.
-        if ($signatureMethodNodes->length < 1) {
+        if (!$signatureMethodNodes || $signatureMethodNodes->length < 1) {
             throw new XmlSignatureValidatorException('Verification failed: No Signature was found in the document.');
         }
 
         // We only support one signature for the entire XML document.
         // Throw an exception if more than one signature was found.
         if ($signatureMethodNodes->length > 1) {
-            throw new XmlSignatureValidatorException('Verification failed: More that one signature was found for the document.');
+            throw new XmlSignatureValidatorException(
+                'Verification failed: More that one signature was found for the document.'
+            );
         }
 
         /** @var DOMElement $element */
         $element = $signatureMethodNodes->item(0);
         if (!$element instanceof DOMElement) {
-            throw new XmlSignatureValidatorException('Verification failed: Signature algorithm was found for the document.');
+            throw new XmlSignatureValidatorException(
+                'Verification failed: Signature algorithm was found for the document.'
+            );
         }
 
         $algorithm = $element->getAttribute('Algorithm');
@@ -329,19 +327,14 @@ final class XmlSignatureValidator
         switch ($algorithm) {
             case self::SHA1_URL:
                 return OPENSSL_ALGO_SHA1;
-                break;
             case self::SHA224_URL:
                 return OPENSSL_ALGO_SHA224;
-                break;
             case self::SHA256_URL:
                 return OPENSSL_ALGO_SHA256;
-                break;
             case self::SHA384_URL:
                 return OPENSSL_ALGO_SHA384;
-                break;
             case self::SHA512_URL:
                 return OPENSSL_ALGO_SHA512;
-                break;
             default:
                 throw new XmlSignatureValidatorException("Cannot verify: Unsupported Algorithm <$algorithm>");
         }

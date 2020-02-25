@@ -5,6 +5,7 @@ namespace Selective\XmlDSig;
 use DOMDocument;
 use DOMXPath;
 use Selective\XmlDSig\Exception\XmlSignerException;
+use UnexpectedValueException;
 
 /**
  * Sign XML Documents with Digital Signatures (XMLDSIG).
@@ -70,6 +71,19 @@ final class XmlSigner
      * @var string
      */
     private $publicExponent;
+
+    /**
+     * @var XmlReader
+     */
+    private $xmlReader;
+
+    /**
+     * The constructor.
+     */
+    public function __construct()
+    {
+        $this->xmlReader = new XmlReader();
+    }
 
     /**
      * Read and load the pfx file.
@@ -148,11 +162,21 @@ final class XmlSigner
     /**
      * Load private key details.
      *
+     * @throws UnexpectedValueException
+     *
      * @return void
      */
-    private function loadPrivateKeyDetails()
+    private function loadPrivateKeyDetails(): void
     {
+        if (!$this->privateKeyId) {
+            throw new UnexpectedValueException('Private key is not defined');
+        }
+
         $details = openssl_pkey_get_details($this->privateKeyId);
+
+        if ($details === false) {
+            throw new UnexpectedValueException('Invalid private key');
+        }
 
         $key = $this->getPrivateKeyDetailKey($details['type']);
         $this->modulus = base64_encode($details[$key]['n']);
@@ -212,10 +236,30 @@ final class XmlSigner
         $xml->load($filename);
 
         // Canonicalize the content, exclusive and without comments
+        if (!$xml->documentElement) {
+            throw new UnexpectedValueException('Undefined document element');
+        }
+
         $canonicalData = $xml->documentElement->C14N(true, false);
 
         // Calculate and encode digest value
-        $digestValue = base64_encode(openssl_digest($canonicalData, $this->algorithmName, true));
+        $digestValue = openssl_digest($canonicalData, $this->algorithmName, true);
+        if ($digestValue === false) {
+            throw new UnexpectedValueException('Invalid digest value');
+        }
+
+        $digestValue = base64_encode($digestValue);
+
+        /* $canonicalData2 = $xml->documentElement->C14N(false, false);
+         $digestValue2 = base64_encode(pack('H*', sha1($canonicalData)));
+
+         if ($canonicalData !== $canonicalData2) {
+             throw new \UnexpectedValueException();
+         }
+
+         if ($digestValue !== $digestValue2) {
+             throw new \UnexpectedValueException();
+         }*/
 
         $this->appendSignature($xml, $digestValue);
 
@@ -242,6 +286,8 @@ final class XmlSigner
      * @param DOMDocument $xml The xml document
      * @param string $digestValue The digest value
      *
+     * @throws UnexpectedValueException
+     *
      * @return void The DOM document
      */
     private function appendSignature(DOMDocument $xml, string $digestValue)
@@ -251,6 +297,11 @@ final class XmlSigner
 
         // Append the element to the XML document.
         // We insert the new element as root (child of the document)
+
+        if (!$xml->documentElement) {
+            throw new UnexpectedValueException('Undefined document element');
+        }
+
         $xml->documentElement->appendChild($signatureElement);
 
         $signedInfoElement = $xml->createElement('SignedInfo');
@@ -305,6 +356,10 @@ final class XmlSigner
         $c14nSignedInfo = $signedInfoElement->C14N(true, false);
 
         // Calculate and encode digest value
+        if (!$this->privateKeyId) {
+            throw new UnexpectedValueException('Undefined private key');
+        }
+
         $status = openssl_sign($c14nSignedInfo, $signatureValue, $this->privateKeyId, $this->sslAlgorithm);
 
         if (!$status) {
@@ -312,7 +367,7 @@ final class XmlSigner
         }
 
         $xpath = new DOMXpath($xml);
-        $signatureValueElement = $xpath->query('//SignatureValue', $signatureElement)->item(0);
+        $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//SignatureValue', $signatureElement);
         $signatureValueElement->nodeValue = base64_encode($signatureValue);
     }
 
