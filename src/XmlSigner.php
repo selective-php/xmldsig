@@ -249,18 +249,6 @@ final class XmlSigner
         }
 
         $digestValue = base64_encode($digestValue);
-
-        /* $canonicalData2 = $xml->documentElement->C14N(false, false);
-         $digestValue2 = base64_encode(pack('H*', sha1($canonicalData)));
-
-         if ($canonicalData !== $canonicalData2) {
-             throw new \UnexpectedValueException();
-         }
-
-         if ($digestValue !== $digestValue2) {
-             throw new \UnexpectedValueException();
-         }*/
-
         $this->appendSignature($xml, $digestValue);
 
         file_put_contents($outputFilename, $xml->saveXML());
