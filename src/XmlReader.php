@@ -7,7 +7,7 @@ use DOMXPath;
 use UnexpectedValueException;
 
 /**
- * A Xml Reader
+ * A Xml Reader.
  */
 final class XmlReader
 {
