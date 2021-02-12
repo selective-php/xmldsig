@@ -1,6 +1,6 @@
 name: PHP
 
-on: [ push ]
+on: [ push, pull_request ]
 
 jobs:
   run:
@@ -22,27 +22,27 @@ jobs:
           extensions: mbstring, intl, zip
           coverage: none
 
-          - name: Check PHP Version
+      - name: Check PHP Version
         run: php -v
 
-          - name: Check Composer Version
-            run: composer -V
+      - name: Check Composer Version
+        run: composer -V
 
-          - name: Check PHP Extensions
-            run: php -m
+      - name: Check PHP Extensions
+        run: php -m
 
-          - name: Validate composer.json and composer.lock
-            run: composer validate
+      - name: Validate composer.json and composer.lock
+        run: composer validate
 
-          - name: Install dependencies for PHP 7
-            if: matrix.php-versions < '8.0'
-            run: composer update --prefer-dist --no-progress
+      - name: Install dependencies for PHP 7
+        if: matrix.php-versions < '8.0'
+        run: composer update --prefer-dist --no-progress
 
-          - name: Install dependencies for PHP 8
-            if: matrix.php-versions >= '8.0'
-            run: composer update --prefer-dist --no-progress --ignore-platform-req=php
+      - name: Install dependencies for PHP 8
+        if: matrix.php-versions >= '8.0'
+        run: composer update --prefer-dist --no-progress --ignore-platform-req=php
 
-          - name: Run test suite
-            run: composer check
-            env:
-              PHP_CS_FIXER_IGNORE_ENV: 1
+      - name: Run test suite
+        run: composer check
+        env:
+          PHP_CS_FIXER_IGNORE_ENV: 1
