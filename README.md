@@ -1,11 +1,11 @@
 # XMLDSIG for PHP
 
-[![Latest Version on Packagist](https://img.shields.io/github/release/selective-php/xmldsig.svg?style=flat-square)](https://packagist.org/packages/selective/xmldsig)
-[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
-[![Build Status](https://img.shields.io/travis/selective-php/xmldsig/master.svg?style=flat-square)](https://travis-ci.org/selective-php/xmldsig)
-[![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/selective-php/xmldsig.svg?style=flat-square)](https://scrutinizer-ci.com/g/selective-php/xmldsig/code-structure)
-[![Quality Score](https://img.shields.io/scrutinizer/quality/g/selective-php/xmldsig.svg?style=flat-square)](https://scrutinizer-ci.com/g/selective-php/xmldsig/?branch=master)
-[![Total Downloads](https://img.shields.io/packagist/dt/selective/xmldsig.svg?style=flat-square)](https://packagist.org/packages/selective/xmldsig/stats)
+[![Latest Version on Packagist](https://img.shields.io/github/release/selective-php/xmldsig.svg)](https://packagist.org/packages/selective/xmldsig)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+[![Build Status](https://github.com/selective-php/xmldsig/workflows/build/badge.svg)](https://github.com/selective-php/xmldsig/actions)
+[![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/selective-php/xmldsig.svg)](https://scrutinizer-ci.com/g/selective-php/xmldsig/code-structure)
+[![Quality Score](https://img.shields.io/scrutinizer/quality/g/selective-php/xmldsig.svg)](https://scrutinizer-ci.com/g/selective-php/xmldsig/?branch=master)
+[![Total Downloads](https://img.shields.io/packagist/dt/selective/xmldsig.svg)](https://packagist.org/packages/selective/xmldsig/stats)
 
 ## Features
 
@@ -14,7 +14,7 @@
 
 ## Requirements
 
-* PHP 7.1.3+
+* PHP 7.1.3+ or 8.0+
 * The openssl extension
 * A X.509 digital certificate
 
