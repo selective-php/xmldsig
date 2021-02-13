@@ -32,11 +32,11 @@ Input file: example.xml
 
 ```xml
 <?xml version="1.0"?>
-<root>  
-    <creditcard>  
-        <number>19834209</number>  
-        <expiry>02/02/2025</expiry>  
-    </creditcard>  
+<root>
+    <creditcard>
+        <number>19834209</number>
+        <expiry>02/02/2025</expiry>
+    </creditcard>
 </root>
 ```
 
@@ -48,8 +48,14 @@ $xmlSigner = new XmlSigner();
 
 $xmlSigner->loadPfxFile('filename.pfx', 'password');
 
+// or load pfx from a string
+//$xmlSigner->loadPfx('pfx content', 'password');
+
 // or load a PEM file
 //$xmlSigner->loadPrivateKeyFile('filename.pem', 'password');
+
+// or load a PEM private key from a string
+//$xmlSigner->loadPrivateKey('private key content', 'password');
 
 // Optional: Set reference URI
 $xmlSigner->setReferenceUri('');
@@ -61,25 +67,25 @@ Output file: signed-example.xml
 
 ```xml
 <?xml version="1.0"?>
-<root>  
-<creditcard>  
-    <number>19834209</number>  
-    <expiry>02/02/2025</expiry>  
-</creditcard>  
-<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
-    <SignedInfo>
-        <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
-        <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"/>
-        <Reference URI="">
-            <Transforms>
-                <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
-            </Transforms>
-            <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"/>
-            <DigestValue>Base64EncodedValue==</DigestValue>
-        </Reference>
-    </SignedInfo>
-    <SignatureValue>AnotherBase64EncodedValue===</SignatureValue>
-</Signature>
+<root>
+    <creditcard>
+        <number>19834209</number>
+        <expiry>02/02/2025</expiry>
+    </creditcard>
+    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+        <SignedInfo>
+            <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+            <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"/>
+            <Reference URI="">
+                <Transforms>
+                    <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+                </Transforms>
+                <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"/>
+                <DigestValue>Base64EncodedValue==</DigestValue>
+            </Reference>
+        </SignedInfo>
+        <SignatureValue>AnotherBase64EncodedValue===</SignatureValue>
+    </Signature>
 </root>
 ```
 
@@ -93,10 +99,19 @@ $signatureValidator = new XmlSignatureValidator();
 // Load a PFX file
 $signatureValidator->loadPfxFile('filename.pfx', 'password');
 
-// or load just a public key file
+// or load just a public key file from a string
+//$signatureValidator->loadPfx('public key content', 'password');
+
+// or load a public key file
 //$signatureValidator->loadPublicKeyFile('cacert.pem', 'password');
 
+// or load the public key from a string
+$signatureValidator->loadPublicKey('public key content', 'password');
+
 $isValid = $signatureValidator->verifyXmlFile('signed-example.xml');
+
+// or validate the xml from a string
+//$isValid = $signatureValidator->verifyXml('xml content');
 
 if ($isValid) {
     echo 'The XML signature is valid.';

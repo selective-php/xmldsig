@@ -4,6 +4,7 @@ namespace Selective\XmlDSig;
 
 use DOMDocument;
 use DOMXPath;
+use Selective\XmlDSig\Exception\XmlSignatureValidatorException;
 use Selective\XmlDSig\Exception\XmlSignerException;
 use UnexpectedValueException;
 
@@ -93,21 +94,36 @@ final class XmlSigner
      *
      * @throws XmlSignerException
      *
-     * @return bool Success
+     * @return void
      */
-    public function loadPfxFile(string $filename, string $password): bool
+    public function loadPfxFile(string $filename, string $password): void
     {
         if (!file_exists($filename)) {
             throw new XmlSignerException(sprintf('File not found: %s', $filename));
         }
 
-        $certStore = file_get_contents($filename);
+        $pfx = file_get_contents($filename);
 
-        if (!$certStore) {
+        if (!$pfx) {
             throw new XmlSignerException(sprintf('File could not be read: %s', $filename));
         }
 
-        $status = openssl_pkcs12_read($certStore, $certInfo, $password);
+        $this->loadPfx($pfx, $password);
+    }
+
+    /**
+     * Load the PFX content.
+     *
+     * @param string $pfx PFX content
+     * @param string $password PFX password
+     *
+     * @throws XmlSignerException
+     *
+     * @return void
+     */
+    public function loadPfx(string $pfx, string $password): void
+    {
+        $status = openssl_pkcs12_read($pfx, $certInfo, $password);
 
         if (!$status) {
             throw new XmlSignerException('Invalid PFX password');
@@ -121,42 +137,6 @@ final class XmlSigner
         }
 
         $this->loadPrivateKeyDetails();
-
-        return true;
-    }
-
-    /**
-     * Read and load a private key file.
-     *
-     * @param string $filename The PEM filename
-     * @param string $password The PEM password
-     *
-     * @throws XmlSignerException
-     *
-     * @return bool Success
-     */
-    public function loadPrivateKeyFile(string $filename, string $password): bool
-    {
-        if (!file_exists($filename)) {
-            throw new XmlSignerException(sprintf('File not found: %s', $filename));
-        }
-
-        $certStore = file_get_contents($filename);
-
-        if (!$certStore) {
-            throw new XmlSignerException(sprintf('File could not be read: %s', $filename));
-        }
-
-        // Read the private key
-        $this->privateKeyId = openssl_pkey_get_private($certStore, $password);
-
-        if (!$this->privateKeyId) {
-            throw new XmlSignerException('Invalid password or private key');
-        }
-
-        $this->loadPrivateKeyDetails();
-
-        return true;
     }
 
     /**
@@ -202,6 +182,53 @@ final class XmlSigner
     }
 
     /**
+     * Read and load a private key file.
+     *
+     * @param string $filename The PEM filename
+     * @param string $password The PEM password
+     *
+     * @throws XmlSignerException
+     *
+     * @return void
+     */
+    public function loadPrivateKeyFile(string $filename, string $password): void
+    {
+        if (!file_exists($filename)) {
+            throw new XmlSignerException(sprintf('File not found: %s', $filename));
+        }
+
+        $privateKey = file_get_contents($filename);
+
+        if (!$privateKey) {
+            throw new XmlSignerException(sprintf('File could not be read: %s', $filename));
+        }
+
+        $this->loadPrivateKey($privateKey, $password);
+    }
+
+    /**
+     * Read and load a private key file.
+     *
+     * @param string $privateKey The private key
+     * @param string $password The PEM password
+     *
+     * @throws XmlSignerException
+     *
+     * @return void
+     */
+    public function loadPrivateKey(string $privateKey, string $password): void
+    {
+        // Read the private key
+        $this->privateKeyId = openssl_pkey_get_private($privateKey, $password);
+
+        if (!$this->privateKeyId) {
+            throw new XmlSignerException('Invalid password or private key');
+        }
+
+        $this->loadPrivateKeyDetails();
+    }
+
+    /**
      * Sign an XML file and save the signature in a new file.
      * This method does not save the public key within the XML file.
      *
@@ -211,14 +238,37 @@ final class XmlSigner
      *
      * @throws XmlSignerException
      *
-     * @return bool Success
+     * @return void
      */
-    public function signXmlFile(string $filename, string $outputFilename, string $algorithm): bool
+    public function signXmlFile(string $filename, string $outputFilename, string $algorithm): void
     {
         if (!file_exists($filename)) {
             throw new XmlSignerException(sprintf('File not found: %s', $filename));
         }
 
+        $xmlContent = file_get_contents($filename);
+
+        if (!$xmlContent) {
+            throw new XmlSignatureValidatorException(sprintf('File could not be read: %s', $filename));
+        }
+
+        $signedXml = $this->signXml($xmlContent, $algorithm);
+        file_put_contents($outputFilename, $signedXml);
+    }
+
+    /**
+     * Sign an XML file and save the signature in a new file.
+     * This method does not save the public key within the XML file.
+     *
+     * @param string $xmlContent The XML content to sign
+     * @param string $algorithm For example: sha1, sha224, sha256, sha384, sha512
+     *
+     * @throws XmlSignerException
+     *
+     * @return string The signed XML content
+     */
+    public function signXml(string $xmlContent, string $algorithm): string
+    {
         if (!$this->privateKeyId) {
             throw new XmlSignerException('No private key provided');
         }
@@ -230,10 +280,9 @@ final class XmlSigner
 
         // Whitespaces must be preserved
         $xml->preserveWhiteSpace = true;
-
         $xml->formatOutput = false;
 
-        $xml->load($filename);
+        $xml->loadXML($xmlContent);
 
         // Canonicalize the content, exclusive and without comments
         if (!$xml->documentElement) {
@@ -251,21 +300,53 @@ final class XmlSigner
         $digestValue = base64_encode($digestValue);
         $this->appendSignature($xml, $digestValue);
 
-        file_put_contents($outputFilename, $xml->saveXML());
+        $result = $xml->saveXML();
 
-        return true;
+        if ($result === false) {
+            throw new UnexpectedValueException('Signing failed. Invalid XML.');
+        }
+
+        return $result;
     }
 
     /**
-     * Set reference URI.
+     * Set signature and digest algorithm.
      *
-     * @param string $referenceUri The reference URI
-     *
-     * @return void
+     * @param string $algorithm For example: sha1, sha224, sha256, sha384, sha512
      */
-    public function setReferenceUri(string $referenceUri)
+    private function setAlgorithm(string $algorithm): void
     {
-        $this->referenceUri = $referenceUri;
+        switch ($algorithm) {
+            case 'sha1':
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA1_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA1_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA1;
+                break;
+            case 'sha224':
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA224_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA224_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA224;
+                break;
+            case 'sha256':
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA256_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA256_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA256;
+                break;
+            case 'sha384':
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA384_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA384_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA384;
+                break;
+            case 'sha512':
+                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA512_URL;
+                $this->digestAlgorithmUrl = self::DIGEST_SHA512_URL;
+                $this->sslAlgorithm = OPENSSL_ALGO_SHA512;
+                break;
+            default:
+                throw new XmlSignerException("Cannot validate digest: Unsupported algorithm <$algorithm>");
+        }
+
+        $this->algorithmName = $algorithm;
     }
 
     /**
@@ -360,43 +441,15 @@ final class XmlSigner
     }
 
     /**
-     * Set signature and digest algorithm.
+     * Set reference URI.
      *
-     * @param string $algorithm For example: sha1, sha224, sha256, sha384, sha512
+     * @param string $referenceUri The reference URI
+     *
+     * @return void
      */
-    private function setAlgorithm(string $algorithm): void
+    public function setReferenceUri(string $referenceUri)
     {
-        switch ($algorithm) {
-            case 'sha1':
-                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA1_URL;
-                $this->digestAlgorithmUrl = self::DIGEST_SHA1_URL;
-                $this->sslAlgorithm = OPENSSL_ALGO_SHA1;
-                break;
-            case 'sha224':
-                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA224_URL;
-                $this->digestAlgorithmUrl = self::DIGEST_SHA224_URL;
-                $this->sslAlgorithm = OPENSSL_ALGO_SHA224;
-                break;
-            case 'sha256':
-                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA256_URL;
-                $this->digestAlgorithmUrl = self::DIGEST_SHA256_URL;
-                $this->sslAlgorithm = OPENSSL_ALGO_SHA256;
-                break;
-            case 'sha384':
-                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA384_URL;
-                $this->digestAlgorithmUrl = self::DIGEST_SHA384_URL;
-                $this->sslAlgorithm = OPENSSL_ALGO_SHA384;
-                break;
-            case 'sha512':
-                $this->signatureAlgorithmUrl = self::SIGNATURE_SHA512_URL;
-                $this->digestAlgorithmUrl = self::DIGEST_SHA512_URL;
-                $this->sslAlgorithm = OPENSSL_ALGO_SHA512;
-                break;
-            default:
-                throw new XmlSignerException("Cannot validate digest: Unsupported algorithm <$algorithm>");
-        }
-
-        $this->algorithmName = $algorithm;
+        $this->referenceUri = $referenceUri;
     }
 
     /**
@@ -405,7 +458,8 @@ final class XmlSigner
     public function __destruct()
     {
         // Free the key from memory
-        if ($this->privateKeyId) {
+        // PHP 8 deprecates openssl_free_key and automatically destroys the key instance when it goes out of scope.
+        if ($this->privateKeyId && version_compare(PHP_VERSION, '8.0.0', '<')) {
             openssl_free_key($this->privateKeyId);
         }
     }

@@ -62,7 +62,11 @@ class XmlSignatureTest extends TestCase
                     unlink($outputFilename);
                 }
 
-                $this->assertFileNotExists($outputFilename);
+                if (method_exists($this, 'assertFileDoesNotExist')) {
+                    $this->assertFileDoesNotExist($outputFilename);
+                } else {
+                    $this->assertFileNotExists($outputFilename);
+                }
 
                 $signedXml = new XmlSigner();
 
@@ -73,9 +77,8 @@ class XmlSignatureTest extends TestCase
                 }
 
                 $signedXml->setReferenceUri('');
-                $success = $signedXml->signXmlFile($filename, $outputFilename, $algo);
+                $signedXml->signXmlFile($filename, $outputFilename, $algo);
 
-                $this->assertTrue($success);
                 $this->assertFileExists($outputFilename);
 
                 // verify

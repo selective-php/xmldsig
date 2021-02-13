@@ -48,33 +48,46 @@ final class XmlSignatureValidator
      *
      * @throws XmlSignatureValidatorException
      *
-     * @return bool Success
+     * @return void
      */
-    public function loadPfxFile(string $filename, string $password): bool
+    public function loadPfxFile(string $filename, string $password)
     {
         if (!file_exists($filename)) {
             throw new XmlSignatureValidatorException(sprintf('File not found: %s', $filename));
         }
 
-        $certStore = file_get_contents($filename);
+        $pkcs12 = file_get_contents($filename);
 
-        if (!$certStore) {
+        if (!$pkcs12) {
             throw new XmlSignatureValidatorException(sprintf('File could not be read: %s', $filename));
         }
 
-        $status = openssl_pkcs12_read($certStore, $certInfo, $password);
+        $this->loadPfx($pkcs12, $password);
+    }
+
+    /**
+     * Read and load the pfx file.
+     *
+     * @param string $pkcs12 The certificate store data
+     * @param string $password encryption password for unlocking the PKCS12 file
+     *
+     * @throws XmlSignatureValidatorException
+     *
+     * @return void
+     */
+    public function loadPfx(string $pkcs12, string $password): void
+    {
+        $status = openssl_pkcs12_read($pkcs12, $certificates, $password);
 
         if (!$status) {
             throw new XmlSignatureValidatorException('Invalid PFX password');
         }
 
-        $this->publicKeyId = openssl_get_publickey($certInfo['cert']);
+        $this->publicKeyId = openssl_get_publickey($certificates['cert']);
 
         if (!$this->publicKeyId) {
             throw new XmlSignatureValidatorException('Invalid public key');
         }
-
-        return true;
     }
 
     /**
@@ -84,27 +97,39 @@ final class XmlSignatureValidator
      *
      * @throws XmlSignatureValidatorException
      *
-     * @return bool Success
+     * @return void
      */
-    public function loadPublicKeyFile(string $filename): bool
+    public function loadPublicKeyFile(string $filename): void
     {
         if (!file_exists($filename)) {
             throw new XmlSignatureValidatorException(sprintf('File not found: %s', $filename));
         }
 
-        $certStore = file_get_contents($filename);
+        $publicKey = file_get_contents($filename);
 
-        if (!$certStore) {
+        if (!$publicKey) {
             throw new XmlSignatureValidatorException(sprintf('File could not be read: %s', $filename));
         }
 
-        $this->publicKeyId = openssl_get_publickey($certStore);
+        $this->loadPublicKey($publicKey);
+    }
+
+    /**
+     * Load the public key content.
+     *
+     * @param string $publicKey The public key data
+     *
+     * @throws XmlSignatureValidatorException
+     *
+     * @return void
+     */
+    public function loadPublicKey(string $publicKey): void
+    {
+        $this->publicKeyId = openssl_get_publickey($publicKey);
 
         if (!$this->publicKeyId) {
             throw new XmlSignatureValidatorException('Invalid public key');
         }
-
-        return true;
     }
 
     /**
@@ -135,6 +160,22 @@ final class XmlSignatureValidator
             throw new XmlSignatureValidatorException(sprintf('File could not be read: %s', $filename));
         }
 
+        return $this->verifyXml($xmlContent);
+    }
+
+    /**
+     * Sign an XML string.
+     *
+     * https://www.xml.com/pub/a/2001/08/08/xmldsig.html#verify
+     *
+     * @param string $xmlContent The xml content
+     *
+     * @throws XmlSignatureValidatorException
+     *
+     * @return bool Success
+     */
+    public function verifyXml(string $xmlContent): bool
+    {
         // Read the xml file content
         $xml = new DOMDocument();
         $xml->preserveWhiteSpace = true;
@@ -170,6 +211,7 @@ final class XmlSignatureValidator
                 // The XML signature is valid
                 return true;
             }
+
             if ($status === 0) {
                 // The XML signature is not valid
                 return false;
@@ -190,6 +232,62 @@ final class XmlSignatureValidator
         // }
 
         return false;
+    }
+
+    /**
+     * Detect digest algorithm.
+     *
+     * @param DOMDocument $xml The xml document
+     *
+     * @throws XmlSignatureValidatorException
+     *
+     * @return int The algorithm code
+     */
+    private function getDigestAlgorithm(DOMDocument $xml): int
+    {
+        $xpath = new DOMXPath($xml);
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
+        $xpath->registerNamespace('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315');
+
+        $signatureMethodNodes = $xpath->query('//xmlns:Signature/xmlns:SignedInfo/xmlns:SignatureMethod');
+
+        // Throw an exception if no signature was found.
+        if (!$signatureMethodNodes || $signatureMethodNodes->length < 1) {
+            throw new XmlSignatureValidatorException('Verification failed: No Signature was found in the document.');
+        }
+
+        // We only support one signature for the entire XML document.
+        // Throw an exception if more than one signature was found.
+        if ($signatureMethodNodes->length > 1) {
+            throw new XmlSignatureValidatorException(
+                'Verification failed: More that one signature was found for the document.'
+            );
+        }
+
+        /** @var DOMElement $element */
+        $element = $signatureMethodNodes->item(0);
+        if (!$element instanceof DOMElement) {
+            throw new XmlSignatureValidatorException(
+                'Verification failed: Signature algorithm was found for the document.'
+            );
+        }
+
+        $algorithm = $element->getAttribute('Algorithm');
+
+        switch ($algorithm) {
+            case self::SHA1_URL:
+                return OPENSSL_ALGO_SHA1;
+            case self::SHA224_URL:
+                return OPENSSL_ALGO_SHA224;
+            case self::SHA256_URL:
+                return OPENSSL_ALGO_SHA256;
+            case self::SHA384_URL:
+                return OPENSSL_ALGO_SHA384;
+            case self::SHA512_URL:
+                return OPENSSL_ALGO_SHA512;
+            default:
+                throw new XmlSignatureValidatorException("Cannot verify: Unsupported Algorithm <$algorithm>");
+        }
     }
 
     /**
@@ -239,6 +337,18 @@ final class XmlSignatureValidator
     }
 
     /**
+     * Destructor.
+     */
+    public function __destruct()
+    {
+        // Free the key from memory
+        // PHP 8 deprecates openssl_free_key and automatically destroys the key instance when it goes out of scope.
+        if ($this->publicKeyId && version_compare(PHP_VERSION, '8.0.0', '<')) {
+            openssl_free_key($this->publicKeyId);
+        }
+    }
+
+    /**
      * Get the digest value.
      *
      * @param DOMDocument $xml The xml document
@@ -282,72 +392,5 @@ final class XmlSignatureValidator
         }
 
         return (string)$result;
-    }
-
-    /**
-     * Detect digest algorithm.
-     *
-     * @param DOMDocument $xml The xml document
-     *
-     * @throws XmlSignatureValidatorException
-     *
-     * @return int The algorithm code
-     */
-    protected function getDigestAlgorithm(DOMDocument $xml): int
-    {
-        $xpath = new DOMXPath($xml);
-        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
-        $xpath->registerNamespace('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315');
-
-        $signatureMethodNodes = $xpath->query('//xmlns:Signature/xmlns:SignedInfo/xmlns:SignatureMethod');
-
-        // Throw an exception if no signature was found.
-        if (!$signatureMethodNodes || $signatureMethodNodes->length < 1) {
-            throw new XmlSignatureValidatorException('Verification failed: No Signature was found in the document.');
-        }
-
-        // We only support one signature for the entire XML document.
-        // Throw an exception if more than one signature was found.
-        if ($signatureMethodNodes->length > 1) {
-            throw new XmlSignatureValidatorException(
-                'Verification failed: More that one signature was found for the document.'
-            );
-        }
-
-        /** @var DOMElement $element */
-        $element = $signatureMethodNodes->item(0);
-        if (!$element instanceof DOMElement) {
-            throw new XmlSignatureValidatorException(
-                'Verification failed: Signature algorithm was found for the document.'
-            );
-        }
-
-        $algorithm = $element->getAttribute('Algorithm');
-
-        switch ($algorithm) {
-            case self::SHA1_URL:
-                return OPENSSL_ALGO_SHA1;
-            case self::SHA224_URL:
-                return OPENSSL_ALGO_SHA224;
-            case self::SHA256_URL:
-                return OPENSSL_ALGO_SHA256;
-            case self::SHA384_URL:
-                return OPENSSL_ALGO_SHA384;
-            case self::SHA512_URL:
-                return OPENSSL_ALGO_SHA512;
-            default:
-                throw new XmlSignatureValidatorException("Cannot verify: Unsupported Algorithm <$algorithm>");
-        }
-    }
-
-    /**
-     * Destructor.
-     */
-    public function __destruct()
-    {
-        // Free the key from memory
-        if ($this->publicKeyId) {
-            openssl_free_key($this->publicKeyId);
-        }
     }
 }
