@@ -176,6 +176,10 @@ final class XmlSignatureValidator
      */
     public function verifyXml(string $xmlContent): bool
     {
+        if (!$this->publicKeyId) {
+            throw new XmlSignatureValidatorException('No public key provided');
+        }
+
         // Read the xml file content
         $xml = new DOMDocument();
         $xml->preserveWhiteSpace = true;
