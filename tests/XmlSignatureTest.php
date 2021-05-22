@@ -15,6 +15,17 @@ use Selective\XmlDSig\XmlSigner;
 class XmlSignatureTest extends TestCase
 {
     /**
+     * @var array
+     */
+    private $algos = [
+        DigestAlgorithmType::SHA1,
+        DigestAlgorithmType::SHA224,
+        DigestAlgorithmType::SHA256,
+        DigestAlgorithmType::SHA384,
+        DigestAlgorithmType::SHA512,
+    ];
+
+    /**
      * Test create object.
      *
      * @return void
@@ -46,18 +57,10 @@ class XmlSignatureTest extends TestCase
 
         $outputFilename = __DIR__ . '/signed-example.xml';
 
-        $algos = [
-            DigestAlgorithmType::SHA1,
-            DigestAlgorithmType::SHA224,
-            DigestAlgorithmType::SHA256,
-            DigestAlgorithmType::SHA384,
-            DigestAlgorithmType::SHA512,
-        ];
-
         foreach ($files as $filename) {
             $this->assertFileExists($filename);
 
-            foreach ($algos as $algo) {
+            foreach ($this->algos as $algo) {
                 if (file_exists($outputFilename)) {
                     unlink($outputFilename);
                 }
@@ -77,6 +80,69 @@ class XmlSignatureTest extends TestCase
                 }
 
                 $signedXml->setReferenceUri('');
+                $signedXml->signXmlFile($filename, $outputFilename, $algo);
+
+                $this->assertFileExists($outputFilename);
+
+                // verify
+                $verifyXml = new XmlSignatureValidator();
+
+                if (pathinfo($publicKeyFile, PATHINFO_EXTENSION) === 'pfx') {
+                    $verifyXml->loadPfxFile($publicKeyFile, $password);
+                } else {
+                    $verifyXml->loadPublicKeyFile($publicKeyFile);
+                }
+
+                $isValid = $verifyXml->verifyXmlFile($outputFilename);
+
+                $this->assertTrue($isValid);
+            }
+        }
+    }
+
+    /**
+     * Test.
+     *
+     * @dataProvider providerTestSignAndVerify
+     *
+     * @param string $privateKeyFile The key file
+     * @param string $publicKeyFile The key file
+     * @param string $password The file password
+     *
+     * @return void
+     */
+    public function testSignAndVerifySoap(string $privateKeyFile, string $publicKeyFile, string $password)
+    {
+        $files = [
+            __DIR__ . '/example-soap.xml',
+        ];
+
+        $outputFilename = __DIR__ . '/signed-example.xml';
+
+        foreach ($files as $filename) {
+            $this->assertFileExists($filename);
+
+            foreach ($this->algos as $algo) {
+                if (file_exists($outputFilename)) {
+                    unlink($outputFilename);
+                }
+
+                if (method_exists($this, 'assertFileDoesNotExist')) {
+                    $this->assertFileDoesNotExist($outputFilename);
+                } else {
+                    $this->assertFileNotExists($outputFilename);
+                }
+
+                $signedXml = new XmlSigner();
+
+                if (pathinfo($privateKeyFile, PATHINFO_EXTENSION) === 'pfx') {
+                    $signedXml->loadPfxFile($privateKeyFile, $password);
+                } else {
+                    $signedXml->loadPrivateKeyFile($privateKeyFile, $password);
+                }
+
+                $signedXml->setReferenceUri('');
+                $signedXml->setSignaturePath('/SOAP-ENV:Envelope/SOAP-ENV:Body/xmlns:RegisterTCRRequest');
                 $signedXml->signXmlFile($filename, $outputFilename, $algo);
 
                 $this->assertFileExists($outputFilename);

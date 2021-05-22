@@ -120,6 +120,26 @@ if ($isValid) {
 }
 ```
 
+### Sign SOAP messages
+
+```php
+use Selective\XmlDSig\DigestAlgorithmType;
+use Selective\XmlDSig\XmlSigner;
+
+$xmlSigner = new XmlSigner();
+
+// load pfx
+$xmlSigner->loadPfx('pfx content', 'password');
+
+// optional
+$xmlSigner->setReferenceUri('');
+
+// Define signature target
+$xmlSigner->setSignaturePath('/SOAP-ENV:Envelope/SOAP-ENV:Body/MyTargetElement');
+
+$xmlSigner->signXml('the soap message xml', DigestAlgorithmType::SHA512);
+```
+
 ### Online XML Digital Signature Verifier
 
 Try these excellent online tools to verify XML signatures:

@@ -3,6 +3,7 @@
 namespace Selective\XmlDSig;
 
 use DOMDocument;
+use DOMElement;
 use DOMXPath;
 use Selective\XmlDSig\Exception\XmlSignatureValidatorException;
 use Selective\XmlDSig\Exception\XmlSignerException;
@@ -62,6 +63,11 @@ final class XmlSigner
      * @var string
      */
     private $referenceUri = '';
+
+    /**
+     * @var string|null
+     */
+    private $signatureXpath = null;
 
     /**
      * @var string
@@ -371,7 +377,10 @@ final class XmlSigner
             throw new UnexpectedValueException('Undefined document element');
         }
 
-        $xml->documentElement->appendChild($signatureElement);
+        $xpath = new DOMXpath($xml);
+        $this->xmlReader->registerAllNamespaces($xpath);
+
+        $this->addSignatureElement($xml->documentElement, $xpath, $signatureElement);
 
         $signedInfoElement = $xml->createElement('SignedInfo');
         $signatureElement->appendChild($signedInfoElement);
@@ -435,7 +444,6 @@ final class XmlSigner
             throw new XmlSignerException('Computing of the signature failed');
         }
 
-        $xpath = new DOMXpath($xml);
         $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//SignatureValue', $signatureElement);
         $signatureValueElement->nodeValue = base64_encode($signatureValue);
     }
@@ -450,6 +458,51 @@ final class XmlSigner
     public function setReferenceUri(string $referenceUri)
     {
         $this->referenceUri = $referenceUri;
+    }
+
+    /**
+     * Set reference URI.
+     *
+     * @param string $xpath The signature destination xpath
+     *
+     * @return void
+     */
+    public function setSignaturePath(string $xpath)
+    {
+        $this->signatureXpath = $xpath;
+    }
+
+    /**
+     * Add signature element to DOM object.
+     *
+     * @param DOMElement $xml The dom
+     * @param DOMXPath $xpath The xpath
+     * @param DOMElement $signatureElement The signature element
+     *
+     * @throws XmlSignerException
+     *
+     * @return void
+     */
+    private function addSignatureElement(DOMElement $xml, DOMXPath $xpath, DOMElement $signatureElement)
+    {
+        if (!$this->signatureXpath) {
+            $xml->appendChild($signatureElement);
+
+            return;
+        }
+
+        $element = $xpath->query($this->signatureXpath);
+
+        if (!$element || !$element->length) {
+            throw new XmlSignerException(sprintf('XML element for signature not found: %s', $this->signatureXpath));
+        }
+
+        $item = $element->item(0);
+        if ($item === null) {
+            throw new XmlSignerException(sprintf('XML element for signature not found: %s', $this->signatureXpath));
+        }
+
+        $item->appendChild($signatureElement);
     }
 
     /**

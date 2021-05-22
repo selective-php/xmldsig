@@ -37,4 +37,20 @@ final class XmlReader
 
         return $item;
     }
+
+    /**
+     * Add all namespaces automatically.
+     *
+     * @param DOMXPath $xpath The xpath
+     *
+     * @return void
+     */
+    public function registerAllNamespaces(DOMXPath $xpath)
+    {
+        foreach ($xpath->query('//namespace::*') ?: [] as $namespaceNode) {
+            $prefix = str_replace('xmlns:', '', $namespaceNode->nodeName);
+            $namespaceUri = $namespaceNode->nodeValue;
+            $xpath->registerNamespace($prefix, $namespaceUri);
+        }
+    }
 }
