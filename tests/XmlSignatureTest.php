@@ -142,7 +142,7 @@ class XmlSignatureTest extends TestCase
                 }
 
                 $signedXml->setReferenceUri('');
-                $signedXml->setSignaturePath('/SOAP-ENV:Envelope/SOAP-ENV:Body/xmlns:RegisterTCRRequest');
+                $signedXml->setSignatureXPath('/SOAP-ENV:Envelope/SOAP-ENV:Body/xmlns:RegisterTCRRequest');
                 $signedXml->signXmlFile($filename, $outputFilename, $algo);
 
                 $this->assertFileExists($outputFilename);

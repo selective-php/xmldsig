@@ -136,7 +136,7 @@ $xmlSigner->loadPfx('pfx content', 'password');
 $xmlSigner->setReferenceUri('');
 
 // Define signature target
-$xmlSigner->setSignaturePath('/SOAP-ENV:Envelope/SOAP-ENV:Body/MyTargetElement');
+$xmlSigner->setSignatureXPath('/SOAP-ENV:Envelope/SOAP-ENV:Body/MyTargetElement');
 
 $xmlSigner->signXml('the soap message xml', DigestAlgorithmType::SHA512);
 ```

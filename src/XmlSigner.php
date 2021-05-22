@@ -467,7 +467,7 @@ final class XmlSigner
      *
      * @return void
      */
-    public function setSignaturePath(string $xpath)
+    public function setSignatureXPath(string $xpath)
     {
         $this->signatureXpath = $xpath;
     }
