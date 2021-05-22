@@ -11,7 +11,6 @@
 
 * Sign XML Documents with Digital Signatures ([XMLDSIG](https://www.w3.org/TR/xmldsig-core/))
 * Verify the Digital Signatures of XML Documents
-* Sign SOAP documents
 
 ## Requirements
 
@@ -119,26 +118,6 @@ if ($isValid) {
 } else {
     echo 'The XML signature is not valid.';
 }
-```
-
-### Sign SOAP messages
-
-```php
-use Selective\XmlDSig\DigestAlgorithmType;
-use Selective\XmlDSig\XmlSigner;
-
-$xmlSigner = new XmlSigner();
-
-// load pfx
-$xmlSigner->loadPfx('pfx content', 'password');
-
-// optional
-$xmlSigner->setReferenceUri('');
-
-// Define signature target
-$xmlSigner->setSignatureXPath('/SOAP-ENV:Envelope/SOAP-ENV:Body/MyTargetElement');
-
-$xmlSigner->signXml('the soap message xml', DigestAlgorithmType::SHA512);
 ```
 
 ### Online XML Digital Signature Verifier

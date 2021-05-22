@@ -193,7 +193,7 @@ final class XmlSignatureValidator
         $digestAlgorithm = $this->getDigestAlgorithm($xml);
         $signatureValue = $this->getSignatureValue($xml);
         $xpath = new DOMXPath($xml);
-        $this->xmlReader->registerAllNamespaces($xpath);
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
         /** @var DOMElement $signedInfoNode */
         foreach ($xpath->evaluate('//xmlns:Signature/xmlns:SignedInfo') as $signedInfoNode) {
@@ -250,7 +250,8 @@ final class XmlSignatureValidator
     private function getDigestAlgorithm(DOMDocument $xml): int
     {
         $xpath = new DOMXPath($xml);
-        $this->xmlReader->registerAllNamespaces($xpath);
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
+        $xpath->registerNamespace('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315');
 
         $signatureMethodNodes = $xpath->query('//xmlns:Signature/xmlns:SignedInfo/xmlns:SignatureMethod');
 
@@ -305,7 +306,7 @@ final class XmlSignatureValidator
     private function getSignatureValue(DOMDocument $xml): string
     {
         $xpath = new DOMXPath($xml);
-        $this->xmlReader->registerAllNamespaces($xpath);
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
         // Find the SignatureValue node
         $signatureNodes = $xpath->query('//xmlns:Signature/xmlns:SignatureValue');
