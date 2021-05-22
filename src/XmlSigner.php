@@ -368,7 +368,7 @@ final class XmlSigner
     private function appendSignature(DOMDocument $xml, string $digestValue)
     {
         $signatureElement = $xml->createElement('Signature');
-        $signatureElement->setAttribute('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
+        $signatureElement->setAttribute('xmlns:dsig', 'http://www.w3.org/2000/09/xmldsig#');
 
         // Append the element to the XML document.
         // We insert the new element as root (child of the document)
