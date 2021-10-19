@@ -100,18 +100,21 @@ $signatureValidator = new XmlSignatureValidator();
 $signatureValidator->loadPfxFile('filename.pfx', 'password');
 
 // or load just a public key file from a string
-//$signatureValidator->loadPfx('public key content', 'password');
+$signatureValidator->loadPfx('public key content', 'password');
 
 // or load a public key file (without password)
-//$signatureValidator->loadPublicKeyFile('cacert.pem');
+$signatureValidator->loadPublicKeyFile('cacert.pem');
 
 // or load the public key from a string
-$signatureValidator->loadPublicKey('public key content', 'password');
+$signatureValidator->loadPublicKey('public key content');
+```
 
+```php
+// Verify a XML file
 $isValid = $signatureValidator->verifyXmlFile('signed-example.xml');
 
-// or validate the xml from a string
-//$isValid = $signatureValidator->verifyXml('xml content');
+// or verify XML from a string
+$isValid = $signatureValidator->verifyXml('xml content');
 
 if ($isValid) {
     echo 'The XML signature is valid.';
