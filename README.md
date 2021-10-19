@@ -94,8 +94,11 @@ Output file: signed-example.xml
 ```php
 use Selective\XmlDSig\XmlSignatureValidator;
 
+// Create a validator instance
 $signatureValidator = new XmlSignatureValidator();
+```
 
+```php
 // Load a PFX file
 $signatureValidator->loadPfxFile('filename.pfx', 'password');
 
@@ -116,7 +119,7 @@ $isValid = $signatureValidator->verifyXmlFile('signed-example.xml');
 // or verify XML from a string
 $isValid = $signatureValidator->verifyXml('xml content');
 
-if ($isValid) {
+if ($isValid === true) {
     echo 'The XML signature is valid.';
 } else {
     echo 'The XML signature is not valid.';
