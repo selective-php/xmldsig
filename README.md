@@ -102,8 +102,8 @@ $signatureValidator->loadPfxFile('filename.pfx', 'password');
 // or load just a public key file from a string
 //$signatureValidator->loadPfx('public key content', 'password');
 
-// or load a public key file
-//$signatureValidator->loadPublicKeyFile('cacert.pem', 'password');
+// or load a public key file (without password)
+//$signatureValidator->loadPublicKeyFile('cacert.pem');
 
 // or load the public key from a string
 $signatureValidator->loadPublicKey('public key content', 'password');
