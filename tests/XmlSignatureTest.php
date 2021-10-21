@@ -65,7 +65,7 @@ class XmlSignatureTest extends TestCase
                 if (method_exists($this, 'assertFileDoesNotExist')) {
                     $this->assertFileDoesNotExist($outputFilename);
                 } else {
-                    $this->assertFileDoesNotExist($outputFilename);
+                    $this->assertFileNotExists($outputFilename);
                 }
 
                 $signedXml = new XmlSigner();
