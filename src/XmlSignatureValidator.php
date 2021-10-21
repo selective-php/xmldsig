@@ -236,7 +236,11 @@ final class XmlSignatureValidator
         // Remove signature elements
         /** @var DOMElement $signatureNode */
         foreach ($xpath->query('//xmlns:Signature') ?: [] as $signatureNode) {
-            $signatureNode->remove();
+            if (!$signatureNode->parentNode) {
+                continue;
+            }
+
+            $signatureNode->parentNode->removeChild($signatureNode);
         }
 
         // Canonicalize the content, exclusive and without comments
