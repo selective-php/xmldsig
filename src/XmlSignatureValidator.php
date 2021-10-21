@@ -164,7 +164,7 @@ final class XmlSignatureValidator
     }
 
     /**
-     * Sign an XML string.
+     * Verify an XML string.
      *
      * https://www.xml.com/pub/a/2001/08/08/xmldsig.html#verify
      *
@@ -211,31 +211,44 @@ final class XmlSignatureValidator
 
             $status = openssl_verify($canonicalData, $signatureValue, $this->publicKeyId, $digestAlgorithm);
 
-            if ($status === 1) {
-                // The XML signature is valid
-                return true;
-            }
-
-            if ($status === 0) {
+            if ($status !== 1) {
                 // The XML signature is not valid
                 return false;
             }
-
-            throw new XmlSignatureValidatorException('Error checking signature');
         }
 
-        // @todo check digest value
-        //$digestValue = $this->getDigestValue($xml);
-        //$signatureNodes = $xpath->query('//xmlns:Signature');
+        return $this->checkDigest($xml, $xpath, $digestAlgorithm);
+    }
+
+    /**
+     * Check digest value.
+     *
+     * @param DOMDocument $xml The xml document
+     * @param DOMXPath $xpath The xpath
+     * @param int $digestAlgorithm The digest algorithm
+     *
+     * @return bool The status
+     */
+    private function checkDigest(DOMDocument $xml, DOMXPath $xpath, int $digestAlgorithm): bool
+    {
+        $digestValue = $this->getDigestValue($xml);
+
+        // Remove signature elements
+        /** @var DOMElement $signatureNode */
+        foreach ($xpath->query('//xmlns:Signature') ?: [] as $signatureNode) {
+            $signatureNode->remove();
+        }
 
         // Canonicalize the content, exclusive and without comments
-        //$canonicalData = $xml->documentElement->C14N(true, false);
+        $canonicalData = $xml->C14N(true, false);
 
-        //foreach ($xpath->evaluate('//xmlns:Signature/xmlns:SignedInfo') as $signedInfoNode) {
-        // $signedInfoNode->parentNode->removeChild($signedInfoNode);
-        // }
+        $opensslDigestAlgorithm = $this->getOpenSslDigestAlgo($digestAlgorithm);
+        $digestValue2 = openssl_digest($canonicalData, $opensslDigestAlgorithm, true);
+        if ($digestValue2 === false) {
+            throw new XmlSignatureValidatorException('Invalid digest value');
+        }
 
-        return false;
+        return hash_equals($digestValue, $digestValue2);
     }
 
     /**
@@ -291,6 +304,33 @@ final class XmlSignatureValidator
                 return OPENSSL_ALGO_SHA512;
             default:
                 throw new XmlSignatureValidatorException("Cannot verify: Unsupported Algorithm <$algorithm>");
+        }
+    }
+
+    /**
+     * Map algo to OpenSSL method name.
+     *
+     * @param int $algo The algo
+     *
+     * @return string The name of the OpenSSL algorithm
+     */
+    private function getOpenSslDigestAlgo(int $algo): string
+    {
+        switch ($algo) {
+            case OPENSSL_ALGO_SHA1:
+                return 'sha1';
+            case OPENSSL_ALGO_SHA224:
+                return 'sha224';
+            case OPENSSL_ALGO_SHA256:
+                return 'sha256';
+            case OPENSSL_ALGO_SHA384:
+                return 'sha384';
+            case OPENSSL_ALGO_SHA512:
+                return 'sha512';
+            default:
+                throw new XmlSignatureValidatorException(
+                    "Cannot verify: Unsupported Algorithm <$algo>"
+                );
         }
     }
 
@@ -395,6 +435,6 @@ final class XmlSignatureValidator
             throw new XmlSignatureValidatorException('Verification failed: Invalid base64 data.');
         }
 
-        return (string)$result;
+        return $result;
     }
 }
