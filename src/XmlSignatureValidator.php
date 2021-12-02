@@ -4,7 +4,9 @@ namespace Selective\XmlDSig;
 
 use DOMDocument;
 use DOMElement;
+use DOMNodeList;
 use DOMXPath;
+use OpenSSLAsymmetricKey;
 use Selective\XmlDSig\Exception\XmlSignatureValidatorException;
 
 /**
@@ -23,9 +25,9 @@ final class XmlSignatureValidator
     private const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
 
     /**
-     * @var resource|false
+     * @var OpenSSLAsymmetricKey|null
      */
-    private $publicKeyId;
+    private $publicKeyId = null;
 
     /**
      * @var XmlReader
@@ -83,11 +85,13 @@ final class XmlSignatureValidator
             throw new XmlSignatureValidatorException('Invalid PFX password');
         }
 
-        $this->publicKeyId = openssl_get_publickey($certificates['cert']);
+        $publicKeyId = openssl_get_publickey($certificates['cert']);
 
-        if (!$this->publicKeyId) {
+        if ($publicKeyId === false) {
             throw new XmlSignatureValidatorException('Invalid public key');
         }
+
+        $this->publicKeyId = $publicKeyId;
     }
 
     /**
@@ -125,11 +129,13 @@ final class XmlSignatureValidator
      */
     public function loadPublicKey(string $publicKey): void
     {
-        $this->publicKeyId = openssl_get_publickey($publicKey);
+        $publicKeyId = openssl_get_publickey($publicKey);
 
-        if (!$this->publicKeyId) {
+        if (!$publicKeyId) {
             throw new XmlSignatureValidatorException('Invalid public key');
         }
+
+        $this->publicKeyId = $publicKeyId;
     }
 
     /**
@@ -195,8 +201,11 @@ final class XmlSignatureValidator
         $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
+        /** @var DOMNodeList $nodes */
+        $nodes = $xpath->evaluate('//xmlns:Signature/xmlns:SignedInfo');
+
         /** @var DOMElement $signedInfoNode */
-        foreach ($xpath->evaluate('//xmlns:Signature/xmlns:SignedInfo') as $signedInfoNode) {
+        foreach ($nodes as $signedInfoNode) {
             // Remove SignatureValue value
             $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//xmlns:SignatureValue', $signedInfoNode);
             $signatureValueElement->nodeValue = '';

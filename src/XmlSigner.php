@@ -4,6 +4,7 @@ namespace Selective\XmlDSig;
 
 use DOMDocument;
 use DOMXPath;
+use OpenSSLAsymmetricKey;
 use Selective\XmlDSig\Exception\XmlSignatureValidatorException;
 use Selective\XmlDSig\Exception\XmlSignerException;
 use UnexpectedValueException;
@@ -54,9 +55,9 @@ final class XmlSigner
     private $digestAlgorithmUrl;
 
     /**
-     * @var resource|false
+     * @var OpenSSLAsymmetricKey|null
      */
-    private $privateKeyId;
+    private $privateKeyId = null;
 
     /**
      * @var string
@@ -130,11 +131,13 @@ final class XmlSigner
         }
 
         // Read the private key
-        $this->privateKeyId = openssl_pkey_get_private((string)$certInfo['pkey']);
+        $privateKeyId = openssl_pkey_get_private((string)$certInfo['pkey']);
 
-        if (!$this->privateKeyId) {
+        if (!$privateKeyId) {
             throw new XmlSignerException('Invalid private key');
         }
+
+        $this->privateKeyId = $privateKeyId;
 
         $this->loadPrivateKeyDetails();
     }
@@ -219,11 +222,13 @@ final class XmlSigner
     public function loadPrivateKey(string $privateKey, string $password): void
     {
         // Read the private key
-        $this->privateKeyId = openssl_pkey_get_private($privateKey, $password);
+        $privateKeyId = openssl_pkey_get_private($privateKey, $password);
 
-        if (!$this->privateKeyId) {
+        if (!$privateKeyId) {
             throw new XmlSignerException('Invalid password or private key');
         }
+
+        $this->privateKeyId = $privateKeyId;
 
         $this->loadPrivateKeyDetails();
     }
