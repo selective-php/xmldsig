@@ -12,7 +12,7 @@ tools:
 
 build:
   environment:
-    php: 7.4
+    php: 8.0
     mysql: false
     node: false
     postgresql: false
