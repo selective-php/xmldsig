@@ -98,6 +98,9 @@ use Selective\XmlDSig\XmlSignatureValidator;
 
 // Create a validator instance
 $signatureValidator = new XmlSignatureValidator();
+
+// Create a validator instance that does not remove redundant white spaces
+$signatureValidator = new XmlSignatureValidator(false);
 ```
 
 ```php
