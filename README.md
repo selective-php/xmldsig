@@ -46,20 +46,22 @@ use Selective\XmlDSig\XmlSigner;
 
 $xmlSigner = new XmlSigner();
 
+// Load a pfx file
 $xmlSigner->loadPfxFile('filename.pfx', 'password');
 
 // or load pfx from a string
-//$xmlSigner->loadPfx('pfx content', 'password');
+$xmlSigner->loadPfx('pfx content', 'password');
 
 // or load a PEM file
-//$xmlSigner->loadPrivateKeyFile('filename.pem', 'password');
+$xmlSigner->loadPrivateKeyFile('filename.pem', 'password');
 
 // or load a PEM private key from a string
-//$xmlSigner->loadPrivateKey('private key content', 'password');
+$xmlSigner->loadPrivateKey('private key content', 'password');
 
 // Optional: Set reference URI
 $xmlSigner->setReferenceUri('');
 
+// Create a signed file
 $xmlSigner->signXmlFile('example.xml', 'signed-example.xml', DigestAlgorithmType::SHA512);
 ```
 
