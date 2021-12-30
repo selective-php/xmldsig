@@ -37,47 +37,47 @@ final class XmlSigner
     /**
      * @var int
      */
-    private $sslAlgorithm;
+    private int $sslAlgorithm;
 
     /**
      * @var string
      */
-    private $algorithmName;
+    private string $algorithmName;
 
     /**
      * @var string
      */
-    private $signatureAlgorithmUrl;
+    private string $signatureAlgorithmUrl;
 
     /**
      * @var string
      */
-    private $digestAlgorithmUrl;
+    private string $digestAlgorithmUrl;
 
     /**
      * @var OpenSSLAsymmetricKey|null
      */
-    private $privateKeyId = null;
+    private ?OpenSSLAsymmetricKey $privateKeyId = null;
 
     /**
      * @var string
      */
-    private $referenceUri = '';
+    private string $referenceUri = '';
 
     /**
      * @var string
      */
-    private $modulus;
+    private string $modulus;
 
     /**
      * @var string
      */
-    private $publicExponent;
+    private string $publicExponent;
 
     /**
      * @var XmlReader
      */
-    private $xmlReader;
+    private XmlReader $xmlReader;
 
     /**
      * The constructor.

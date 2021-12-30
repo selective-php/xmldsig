@@ -27,22 +27,24 @@ final class XmlSignatureValidator
     /**
      * @var OpenSSLAsymmetricKey|null
      */
-    private $publicKeyId = null;
+    private ?OpenSSLAsymmetricKey $publicKeyId = null;
 
     /**
      * @var XmlReader
      */
-    private $xmlReader;
+    private XmlReader $xmlReader;
 
     /**
-     * @var preserveWhiteSpace|null
+     * @var bool
      */
-    private $preserveWhiteSpace = null;
-    
+    private bool $preserveWhiteSpace = true;
+
     /**
      * The constructor.
+     *
+     * @param bool $preserveWhiteSpace To remove redundant white spaces
      */
-    public function __construct($preserveWhiteSpace = true)
+    public function __construct(bool $preserveWhiteSpace = true)
     {
         $this->xmlReader = new XmlReader();
         $this->preserveWhiteSpace = $preserveWhiteSpace;
