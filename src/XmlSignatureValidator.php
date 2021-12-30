@@ -79,7 +79,7 @@ final class XmlSignatureValidator
      * Read and load the pfx file.
      *
      * @param string $pkcs12 The certificate store data
-     * @param string $password encryption password for unlocking the PKCS12 file
+     * @param string $password The encryption password for unlocking the PKCS12 file
      *
      * @throws XmlSignatureValidatorException
      *
@@ -392,7 +392,7 @@ final class XmlSignatureValidator
             );
         }
 
-        $result = base64_decode($domNode->nodeValue, true);
+        $result = base64_decode((string)$domNode->nodeValue, true);
 
         if ($result === false) {
             throw new XmlSignatureValidatorException('Verification failed: Invalid base64 data.');
