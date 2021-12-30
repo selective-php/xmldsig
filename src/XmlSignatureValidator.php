@@ -35,11 +35,17 @@ final class XmlSignatureValidator
     private $xmlReader;
 
     /**
+     * @var preserveWhiteSpace|null
+     */
+    private $preserveWhiteSpace = null;
+    
+    /**
      * The constructor.
      */
-    public function __construct()
+    public function __construct($preserveWhiteSpace = true)
     {
         $this->xmlReader = new XmlReader();
+        $this->preserveWhiteSpace = $preserveWhiteSpace;
     }
 
     /**
@@ -188,7 +194,7 @@ final class XmlSignatureValidator
 
         // Read the xml file content
         $xml = new DOMDocument();
-        $xml->preserveWhiteSpace = true;
+        $xml->preserveWhiteSpace = $this->preserveWhiteSpace;
         $xml->formatOutput = false;
         $isValid = $xml->loadXML($xmlContent);
 
