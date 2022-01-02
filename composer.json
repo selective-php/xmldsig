@@ -12,7 +12,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.0",
-        "ext-openssl": "*"
+        "ext-openssl": "*",
+        "ext-dom": "*"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3",
