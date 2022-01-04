@@ -10,3 +10,5 @@ parameters:
 		- '#(.*)OpenSSLAsymmetricKey(.*)null(.*) does not accept resource#'
 		- '#openssl_free_key expects resource(.*) OpenSSLAsymmetricKey given#'
 		- '#openssl_sign expects resource(.*)string(.*) OpenSSLAsymmetricKey given#'
+		- '#function openssl_verify expects resource\|string\, OpenSSLAsymmetricKey given#'
+		- '#function openssl_pkey_get_details expects resource\, OpenSSLAsymmetricKey given#'
