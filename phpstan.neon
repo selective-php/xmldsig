@@ -15,3 +15,6 @@ parameters:
 		- '#function openssl_pkey_get_details expects OpenSSLAsymmetricKey\, OpenSSLAsymmetricKey\|resource given#'
 		- '#function openssl_sign expects array\|OpenSSLAsymmetricKey\|OpenSSLCertificate\|string\, OpenSSLAsymmetricKey\|resource given#'
 		- '#function openssl_free_key expects OpenSSLAsymmetricKey\, OpenSSLAsymmetricKey\|resource given#'
+		- '#function openssl_pkey_get_details expects resource\, OpenSSLAsymmetricKey\|resource given#'
+		- '#function openssl_sign expects resource\|string\, OpenSSLAsymmetricKey\|resource given#'
+		- '#function openssl_free_key expects resource\, OpenSSLAsymmetricKey\|resource given#'
