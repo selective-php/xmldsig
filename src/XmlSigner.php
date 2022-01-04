@@ -55,9 +55,9 @@ final class XmlSigner
     private string $digestAlgorithmUrl;
 
     /**
-     * @var OpenSSLAsymmetricKey|null
+     * @var OpenSSLAsymmetricKey|resource|null
      */
-    private ?OpenSSLAsymmetricKey $privateKeyId = null;
+    private $privateKeyId = null;
 
     /**
      * @var string
