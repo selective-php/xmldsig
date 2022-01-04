@@ -5,7 +5,7 @@ parameters:
 		- src
 		- tests
 	ignoreErrors:
-        - /has unknown class OpenSSLAsymmetricKey as its type/
-        - /\(OpenSSLAsymmetricKey\|null\) does not accept resource/
-        - /openssl_free_key expects resource, OpenSSLAsymmetricKey given/
-        - /openssl_sign expects resource\|string, OpenSSLAsymmetricKey given/
+		- /has unknown class OpenSSLAsymmetricKey as its type/
+		- /\(OpenSSLAsymmetricKey\|null\) does not accept resource/
+		- /openssl_free_key expects resource, OpenSSLAsymmetricKey given/
+		- /openssl_sign expects resource\|string\, OpenSSLAsymmetricKey given/
