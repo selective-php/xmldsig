@@ -18,6 +18,7 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3",
         "overtrue/phplint": "^2.3",
+        "phpcompatibility/php-compatibility": "^9.3",
         "phpstan/phpstan": "^1",
         "phpunit/phpunit": "^8 || ^9",
         "squizlabs/php_codesniffer": "^3"
@@ -39,6 +40,8 @@
         "stan": "phpstan analyse -c phpstan.neon --no-progress --ansi",
         "sniffer:check": "phpcs --standard=phpcs.xml",
         "sniffer:fix": "phpcbf --standard=phpcs.xml",
+        "sniffer:php74": "phpcs -p ./src --standard=vendor/phpcompatibility/php-compatibility/PHPCompatibility --runtime-set testVersion 7.4",
+        "sniffer:php80": "phpcs -p ./src --standard=vendor/phpcompatibility/php-compatibility/PHPCompatibility --runtime-set testVersion 8.0",
         "test": "phpunit --configuration phpunit.xml --do-not-cache-result --colors=always",
         "test:all": [
             "@lint",
