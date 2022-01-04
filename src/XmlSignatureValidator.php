@@ -25,9 +25,9 @@ final class XmlSignatureValidator
     private const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
 
     /**
-     * @var OpenSSLAsymmetricKey|null
+     * @var OpenSSLAsymmetricKey|resource|null
      */
-    private ?OpenSSLAsymmetricKey $publicKeyId = null;
+    private $publicKeyId = null;
 
     /**
      * @var XmlReader
