@@ -43,11 +43,11 @@ jobs:
         run: composer update --prefer-dist --no-progress --ignore-platform-req=php
 
       - name: Check compatibility for PHP 7.4
-        if: matrix.php-versions = '7.4'
+        if: matrix.php-versions == '7.4'
         run: composer sniffer:php74
 
       - name: Check compatibility for PHP 8.0
-        if: matrix.php-versions = '8.0'
+        if: matrix.php-versions == '8.0'
         run: composer sniffer:php80
 
       - name: Run test suite
