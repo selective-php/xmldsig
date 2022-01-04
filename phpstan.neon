@@ -19,3 +19,4 @@ parameters:
 		- '#function openssl_sign expects resource\|string\, OpenSSLAsymmetricKey\|resource given#'
 		- '#function openssl_free_key expects resource\, OpenSSLAsymmetricKey\|resource given#'
 		- '#function openssl_verify expects array\|OpenSSLAsymmetricKey\|OpenSSLCertificate\|string\, OpenSSLAsymmetricKey\|resource given#'
+		- '#function openssl_verify expects resource\|string\, OpenSSLAsymmetricKey\|resource given#'
