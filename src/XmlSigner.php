@@ -3,8 +3,11 @@
 namespace Selective\XmlDSig;
 
 use DOMDocument;
+use DOMElement;
 use DOMXPath;
 use OpenSSLAsymmetricKey;
+use OpenSSLCertificate;
+use Selective\XmlDSig\Exception\X509ReaderException;
 use Selective\XmlDSig\Exception\XmlSignatureValidatorException;
 use Selective\XmlDSig\Exception\XmlSignerException;
 use UnexpectedValueException;
@@ -58,6 +61,11 @@ final class XmlSigner
      * @var OpenSSLAsymmetricKey|resource|null
      */
     private $privateKeyId = null;
+
+    /**
+     * @var OpenSSLCertificate[]|resource[]
+     */
+    private array $certificateIds = array();
 
     /**
      * @var string
@@ -231,6 +239,46 @@ final class XmlSigner
         $this->privateKeyId = $privateKeyId;
 
         $this->loadPrivateKeyDetails();
+    }
+
+
+    /**
+     * Read and load certificates file.
+     *
+     * @param string $filename The PEM/CRT filename
+     *
+     * @throws XmlSignerException
+     *
+     * @return void
+     */
+    public function loadCertificatesFile(string $filename): void
+    {
+        if (!file_exists($filename)) {
+            throw new XmlSignerException(sprintf('File not found: %s', $filename));
+        }
+
+        $certificate = file_get_contents($filename);
+
+        if (!$certificate) {
+            throw new XmlSignerException(sprintf('File could not be read: %s', $filename));
+        }
+
+        $this->loadCertificates($certificate);
+    }
+
+    /**
+     * Load certificates.
+     *
+     * @param string $certificates The certificate bundle
+     *
+     * @throws X509ReaderException
+     *
+     * @return void
+     */
+    public function loadCertificates(string $certificates): void
+    {
+        $x509Reader = new X509Reader();
+        $this->certificateIds = array_merge($this->certificateIds, $x509Reader->fromPem($certificates));
     }
 
     /**
@@ -426,6 +474,11 @@ final class XmlSigner
         $exponentElement = $xml->createElement('Exponent', $this->publicExponent);
         $rsaKeyValueElement->appendChild($exponentElement);
 
+        // If certificates are loaded attach them to the KeyInfo element
+        if(!empty($this->certificateIds)) {
+            $this->appendCertificates($xml, $keyInfoElement);
+        }
+
         // http://www.soapclient.com/XMLCanon.html
         $c14nSignedInfo = $signedInfoElement->C14N(true, false);
 
@@ -443,6 +496,40 @@ final class XmlSigner
         $xpath = new DOMXpath($xml);
         $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//SignatureValue', $signatureElement);
         $signatureValueElement->nodeValue = base64_encode($signatureValue);
+    }
+
+    /**
+     * Create and append an X509Data element containing certificates in base64 format
+     *
+     * @param DOMDocument $xml
+     * @param DOMElement  $keyInfoElement
+     *
+     * @throws X509ReaderException
+     * @throws XmlSignerException
+     *
+     * @return void
+     */
+    private function appendCertificates(DOMDocument $xml, DOMElement $keyInfoElement)
+    {
+        $x509DataElement = $xml->createElement('X509Data');
+        $keyInfoElement->appendChild($x509DataElement);
+
+        $keyMatch = false;
+        foreach ($this->certificateIds as $certificateId) {
+            if (openssl_x509_check_private_key($certificateId, $this->privateKeyId)) {
+                $keyMatch = true;
+            }
+
+            $x509Reader = new X509Reader();
+            $certificate = $x509Reader->toRawBase64($certificateId);
+
+            $x509CertificateElement = $xml->createElement('X509Certificate', $certificate);
+            $x509DataElement->appendChild($x509CertificateElement);
+        }
+
+        if (!$keyMatch) {
+            throw new XmlSignerException('No certificate matches private key');
+        }
     }
 
     /**
@@ -466,6 +553,12 @@ final class XmlSigner
         // PHP 8 deprecates openssl_free_key and automatically destroys the key instance when it goes out of scope.
         if ($this->privateKeyId && version_compare(PHP_VERSION, '8.0.0', '<')) {
             openssl_free_key($this->privateKeyId);
+        }
+
+        if (!empty($this->certificateIds) && version_compare(PHP_VERSION, '8.0.0', '<')) {
+            foreach ($this->certificateIds as $certificateId) {
+                openssl_x509_free($certificateId);
+            }
         }
     }
 }

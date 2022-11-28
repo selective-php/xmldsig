@@ -7,7 +7,9 @@ use DOMElement;
 use DOMNodeList;
 use DOMXPath;
 use OpenSSLAsymmetricKey;
+use OpenSSLCertificate;
 use Selective\XmlDSig\Exception\XmlSignatureValidatorException;
+use Symfony\Component\Config\Util\Exception\XmlParsingException;
 
 /**
  * Verify the Digital Signatures of XML Documents.
@@ -25,9 +27,14 @@ final class XmlSignatureValidator
     private const SHA512_URL = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha512';
 
     /**
-     * @var OpenSSLAsymmetricKey|resource|null
+     * @var OpenSSLAsymmetricKey[]|resource[]
      */
-    private $publicKeyId = null;
+    private array $publicKeyIds = array();
+
+    /**
+     * @var OpenSSLCertificate[]|resource[]
+     */
+    private array $caCertificateIds = array();
 
     /**
      * @var XmlReader
@@ -48,6 +55,45 @@ final class XmlSignatureValidator
     {
         $this->xmlReader = new XmlReader();
         $this->preserveWhiteSpace = $preserveWhiteSpace;
+    }
+
+    /**
+     * Read and load a certificate file.
+     *
+     * @param string $filename The PEM/CRT filename
+     *
+     * @return void
+     * @throws XmlParsingException
+     *
+     */
+    public function loadCaCertificatesFile(string $filename): void
+    {
+        if (!file_exists($filename)) {
+            throw new XmlParsingException(sprintf('File not found: %s', $filename));
+        }
+
+        $caCertificates = file_get_contents($filename);
+
+        if (!$caCertificates) {
+            throw new XmlParsingException(sprintf('File could not be read: %s', $filename));
+        }
+
+        $this->loadCaCertificates($caCertificates);
+    }
+
+    /**
+     * Load a certificate.
+     *
+     * @param string $caCertificates The ca certificates
+     *
+     * @return void
+     * @throws XmlParsingException
+     *
+     */
+    public function loadCaCertificates(string $caCertificates): void
+    {
+        $x509Reader = new X509Reader();
+        $this->caCertificateIds = array_merge($this->caCertificateIds, $x509Reader->fromPem($caCertificates));
     }
 
     /**
@@ -147,6 +193,32 @@ final class XmlSignatureValidator
     }
 
     /**
+     * Load the public key content from X509Certificate element in XML signature.
+     *
+     * @param DOMDocument $xml
+     *
+     * @return void
+     */
+    private function loadPublicKeysFromX509Certificate(DOMDocument $xml): void
+    {
+        $certificateIds = $this->getX509Certificates($xml);
+        $x509ChainValidator = new X509ChainValidator($this->caCertificateIds, $certificateIds);
+
+        foreach ($certificateIds as $certificateId) {
+            if (!$x509ChainValidator->validateCertificateChain($certificateId)) {
+                throw new XmlSignatureValidatorException('Verification failed: Attached certificate failed chain validation');
+            }
+
+            $publicKeyId = openssl_get_publickey($certificateId);
+            if (!$publicKeyId) {
+                throw new XmlSignatureValidatorException('Verification failed: Unable to get public key from attached certificate');
+            }
+
+            $this->publicKeyIds[] = $publicKeyId;
+        }
+    }
+
+    /**
      * Sign an XML file and save the signature in a new file.
      * This method does not save the public key within the XML file.
      *
@@ -190,10 +262,6 @@ final class XmlSignatureValidator
      */
     public function verifyXml(string $xmlContent): bool
     {
-        if (!$this->publicKeyId) {
-            throw new XmlSignatureValidatorException('No public key provided');
-        }
-
         // Read the xml file content
         $xml = new DOMDocument();
         $xml->preserveWhiteSpace = $this->preserveWhiteSpace;
@@ -202,6 +270,14 @@ final class XmlSignatureValidator
 
         if (!$isValid || !$xml->documentElement) {
             throw new XmlSignatureValidatorException('Invalid XML content');
+        }
+
+        if (empty($this->publicKeyIds) && $this->caCertificateIds) {
+            $this->loadPublicKeysFromX509Certificate($xml);
+        }
+
+        if (empty($this->publicKeyIds)) {
+            throw new XmlSignatureValidatorException('No public key provided');
         }
 
         $digestAlgorithm = $this->getDigestAlgorithm($xml);
@@ -226,9 +302,16 @@ final class XmlSignatureValidator
             $xml2->loadXML($canonicalData);
             $canonicalData = $xml2->C14N(true, false);
 
-            $status = openssl_verify($canonicalData, $signatureValue, $this->publicKeyId, $digestAlgorithm);
+            $signatureValid = false;
+            foreach ($this->publicKeyIds as $publicKeyId) {
+                $status = openssl_verify($canonicalData, $signatureValue, $publicKeyId, $digestAlgorithm);
 
-            if ($status !== 1) {
+                if ($status === 1) {
+                    $signatureValid = true;
+                }
+            }
+
+            if (!$signatureValid) {
                 // The XML signature is not valid
                 return false;
             }
@@ -408,8 +491,16 @@ final class XmlSignatureValidator
     {
         // Free the key from memory
         // PHP 8 deprecates openssl_free_key and automatically destroys the key instance when it goes out of scope.
-        if ($this->publicKeyId && version_compare(PHP_VERSION, '8.0.0', '<')) {
-            openssl_free_key($this->publicKeyId);
+        if (!empty($this->publicKeyIds) && version_compare(PHP_VERSION, '8.0.0', '<')) {
+            foreach ($this->publicKeyIds as $publicKeyId) {
+                openssl_free_key($publicKeyId);
+            }
+        }
+
+        if (!empty($this->caCertificateIds) && version_compare(PHP_VERSION, '8.0.0', '<')) {
+            foreach ($this->caCertificateIds as $caCertificateId) {
+                openssl_x509_free($caCertificateId);
+            }
         }
     }
 
@@ -457,5 +548,39 @@ final class XmlSignatureValidator
         }
 
         return $result;
+    }
+
+    /**
+     * Get X509 certificate, if available.
+     *
+     * @param DOMDocument $xml The xml document
+     *
+     * @return array{OpenSSLCertificate|resource} The X509 certificates
+     * @throws XmlSignatureValidatorException
+     *
+     */
+    private function getX509Certificates(DOMDocument $xml)
+    {
+        $certificateIds = array();
+
+        $xpath = new DOMXPath($xml);
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
+
+        // Find the X509Certificate nodes
+        $x509CertificateNodes = $xpath->query('//xmlns:Signature/xmlns:KeyInfo/xmlns:X509Data/xmlns:X509Certificate');
+
+        // Throw an exception if no signature was found.
+        if (!$x509CertificateNodes || $x509CertificateNodes->length < 1) {
+            throw new XmlSignatureValidatorException(
+                'Verification failed: No X509Certificate item was found in the document.'
+            );
+        }
+
+        foreach ($x509CertificateNodes as $domNode) {
+            $x509Reader = new X509Reader();
+            $certificateIds[] = $x509Reader->fromRawBase64($domNode->nodeValue);
+        }
+
+        return $certificateIds;
     }
 }
