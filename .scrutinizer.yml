@@ -12,7 +12,10 @@ tools:
 
 build:
   environment:
-    php: 8.0
+    php:
+      version: 8.1.2
+      ini:
+        xdebug.mode: coverage
     mysql: false
     node: false
     postgresql: false
@@ -30,7 +33,7 @@ build:
   dependencies:
     before:
       - composer self-update
-      - composer update --no-interaction --prefer-dist --no-progress
+      - composer install --no-interaction --prefer-dist --no-progress
   tests:
     before:
       - command: composer test:coverage
