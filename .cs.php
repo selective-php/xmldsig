@@ -1,6 +1,8 @@
 <?php
 
-return (new PhpCsFixer\Config())
+use PhpCsFixer\Config;
+
+return (new Config())
     ->setUsingCache(false)
     ->setRiskyAllowed(true)
     ->setRules(
@@ -18,7 +20,6 @@ return (new PhpCsFixer\Config())
             'cast_spaces' => ['space' => 'none'],
             'concat_space' => ['spacing' => 'one'],
             'compact_nullable_typehint' => true,
-            'declare_equal_normalize' => ['space' => 'single'],
             'increment_style' => ['style' => 'post'],
             'list_syntax' => ['syntax' => 'short'],
             'echo_tag_syntax' => ['format' => 'long'],
@@ -35,6 +36,8 @@ return (new PhpCsFixer\Config())
                 'imports_order' => ['class', 'const', 'function']
             ],
             'single_line_throw' => false,
+            'fully_qualified_strict_types' => true,
+            'global_namespace_import' => false,
         ]
     )
     ->setFinder(

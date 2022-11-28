@@ -14,7 +14,7 @@
 
 ## Requirements
 
-* PHP 7.2+ or 8.0+
+* PHP 8.0+
 * The openssl extension
 * A X.509 digital certificate
 
@@ -135,12 +135,12 @@ if ($isValid === true) {
 
 Try these excellent online tools to verify XML signatures:
 
-* https://www.aleksey.com/xmlsec/xmldsig-verifier.html
-* https://tools.chilkat.io/xmlDsigVerify.cshtml
+* <https://www.aleksey.com/xmlsec/xmldsig-verifier.html>
+* <https://tools.chilkat.io/xmlDsigVerify.cshtml>
 
 ## Similar libraries
 
-* https://github.com/robrichards/xmlseclibs
+* <https://github.com/robrichards/xmlseclibs>
 
 ## License
 

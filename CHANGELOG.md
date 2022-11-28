@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Breaking Changes
+
+- Require PHP 8
+
 ## 2.0.0
 
 ### Added
