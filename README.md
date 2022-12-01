@@ -40,32 +40,44 @@ Input file: example.xml
 </root>
 ```
 
+Create the crypto encoder and load the private key:
+
 ```php
-use Selective\XmlDSig\DigestAlgorithmType;
+use Selective\XmlDSig\OpenSslCryptoEncoder;
+
+// sha1, sha224, sha256, sha384, sha512
+$algo = 'sha512';
+$cryptoEncoder = new OpenSslCryptoEncoder($algo);
+
+// load a private key from a string
+$cryptoEncoder->loadPrivateKey('private key content', 'password');
+
+// or load a private key from a PEM file
+$cryptoEncoder->loadPrivateKey(file_get_contents('filename.pem'), 'password');
+
+// load pfx (PKCS#12 certificate) from a string
+$cryptoEncoder->loadPfx('pfx content', 'password');
+
+// or load pfx (PKCS#12 certificate) from a file
+$cryptoEncoder->loadPfx(file_get_contents('filename.p12'), 'password');
+```
+
+Signing a XML document:
+
+```php
 use Selective\XmlDSig\XmlSigner;
 
-$xmlSigner = new XmlSigner();
-
-// Load a pfx file
-$xmlSigner->loadPfxFile('filename.pfx', 'password');
-
-// or load pfx from a string
-$xmlSigner->loadPfx('pfx content', 'password');
-
-// or load a PEM file
-$xmlSigner->loadPrivateKeyFile('filename.pem', 'password');
-
-// or load a PEM private key from a string
-$xmlSigner->loadPrivateKey('private key content', 'password');
+// Create the XMLDSIG signer and pass the crypto encoder
+$xmlSigner = new XmlSigner($cryptoEncoder);
 
 // Optional: Set reference URI
 $xmlSigner->setReferenceUri('');
 
-// Create a signed file
-$xmlSigner->signXmlFile('example.xml', 'signed-example.xml', DigestAlgorithmType::SHA512);
+// Create a signed XML string
+$signedXml = $xmlSigner->signXml('<?xml ...');
 ```
 
-Output file: signed-example.xml
+Output:
 
 ```xml
 <?xml version="1.0"?>
@@ -94,35 +106,39 @@ Output file: signed-example.xml
 ### Verify the Digital Signatures of XML Documents
 
 ```php
+use Selective\XmlDSig\OpenSslCryptoDecoder;
 use Selective\XmlDSig\XmlSignatureValidator;
 
-// Create a validator instance
-$signatureValidator = new XmlSignatureValidator();
+// Create a crypto decoder instance
+$cryptoDecoder = new OpenSslCryptoDecoder();
 
-// Create a validator instance that does not remove redundant white spaces
-$signatureValidator = new XmlSignatureValidator(false);
-```
+// load a public key file from a string
+$cryptoDecoder->loadPfx('public key content', 'password');
 
-```php
-// Load a PFX file
-$signatureValidator->loadPfxFile('filename.pfx', 'password');
-
-// or load just a public key file from a string
-$signatureValidator->loadPfx('public key content', 'password');
-
-// or load a public key file (without password)
-$signatureValidator->loadPublicKeyFile('cacert.pem');
+// or load a PFX file
+$cryptoDecoder->loadPfx(file_get_contents('filename.pfx'), 'password');
 
 // or load the public key from a string (without password)
-$signatureValidator->loadPublicKey('public key content');
+$cryptoDecoder->loadPublicKey('public key content');
+
+// or load a public key file (without password)
+$cryptoDecoder->loadPublicKey(file_get_contents('cacert.pem'));
 ```
 
 ```php
-// Verify a XML file
-$isValid = $signatureValidator->verifyXmlFile('signed-example.xml');
+// Create a verifier instance and pass the crypto decoder
+$signatureValidator = new XmlSignatureValidator($cryptoDecoder);
 
+// or create a verifier instance that does not remove redundant white spaces
+$signatureValidator = new XmlSignatureValidator($cryptoDecoder, false);
+```
+
+```php
 // or verify XML from a string
 $isValid = $signatureValidator->verifyXml('xml content');
+
+// or verify a XML file
+$isValid = $signatureValidator->verifyXml(file_get_contents('signed-example.xml'));
 
 if ($isValid === true) {
     echo 'The XML signature is valid.';
