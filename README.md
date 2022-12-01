@@ -112,17 +112,17 @@ use Selective\XmlDSig\XmlSignatureValidator;
 // Create a crypto decoder instance
 $cryptoDecoder = new OpenSslCryptoDecoder();
 
-// load a public key file from a string
-$cryptoDecoder->loadPfx('public key content', 'password');
-
-// or load a PFX file
-$cryptoDecoder->loadPfx(file_get_contents('filename.pfx'), 'password');
-
-// or load the public key from a string (without password)
+// load a public key from a string
 $cryptoDecoder->loadPublicKey('public key content');
 
-// or load a public key file (without password)
+// or load a public key file
 $cryptoDecoder->loadPublicKey(file_get_contents('cacert.pem'));
+
+// or load a public key from a PKCS#12 certificate string
+$cryptoDecoder->loadPfx('public key content', 'password');
+
+// or load a public key from a PKCS#12 certificate file
+$cryptoDecoder->loadPfx(file_get_contents('filename.pfx'), 'password');
 ```
 
 ```php
