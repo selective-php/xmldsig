@@ -26,7 +26,7 @@ composer require selective/xmldsig
 
 ## Usage
 
-### Sign XML Document with Digital Signature
+### Signing an XML Document with a digital signature
 
 Input file: example.xml
 
@@ -40,41 +40,67 @@ Input file: example.xml
 </root>
 ```
 
-Create the crypto encoder and load the private key:
+Load and add the private key to the `PrivateKeyStore`:
 
 ```php
-use Selective\XmlDSig\OpenSslCryptoEncoder;
+use Selective\XmlDSig\PrivateKeyStore;
+// ...
 
-// sha1, sha224, sha256, sha384, sha512
-$algo = 'sha512';
-$cryptoEncoder = new OpenSslCryptoEncoder($algo);
+$privateKeyStore = new PrivateKeyStore();
 
 // load a private key from a string
-$cryptoEncoder->loadPrivateKey('private key content', 'password');
+$privateKeyStore->loadFromPem('private key content', 'password');
 
 // or load a private key from a PEM file
-$cryptoEncoder->loadPrivateKey(file_get_contents('filename.pem'), 'password');
+$privateKeyStore->loadFromPem(file_get_contents('filename.pem'), 'password');
 
-// load pfx (PKCS#12 certificate) from a string
-$cryptoEncoder->loadPfx('pfx content', 'password');
+// load pfx PKCS#12 certificate from a string
+$privateKeyStore->loadFromPkcs12('pfx content', 'password');
 
-// or load pfx (PKCS#12 certificate) from a file
-$cryptoEncoder->loadPfx(file_get_contents('filename.p12'), 'password');
+// or load PKCS#12 certificate from a file
+$privateKeyStore->loadFromPkcs12(file_get_contents('filename.p12'), 'password');
 ```
 
-Signing a XML document:
+Define the digest method: sha1, sha224, sha256, sha384, sha512
+
+```php
+use Selective\XmlDSig\Algorithm;
+
+$algorithm = new Algorithm(Algorithm::DIGEST_SHA1);
+```
+
+Create a `CryptoSigner` instance:
+
+```php
+use Selective\XmlDSig\CryptoSigner;
+
+$cryptoSigner = new CryptoSigner($privateKeyStore, $algorithm);
+```
+
+Signing:
 
 ```php
 use Selective\XmlDSig\XmlSigner;
 
-// Create the XMLDSIG signer and pass the crypto encoder
-$xmlSigner = new XmlSigner($cryptoEncoder);
+// Create a XmlSigner and pass the crypto signer
+$xmlSigner = new XmlSigner($cryptoSigner);
 
 // Optional: Set reference URI
 $xmlSigner->setReferenceUri('');
 
 // Create a signed XML string
 $signedXml = $xmlSigner->signXml('<?xml ...');
+
+// or sign an XML file
+$signedXml = $xmlSigner->signXml(file_get_contents($filename));
+
+// or sign an DOMDocument
+$xml = new DOMDocument();
+$xml->preserveWhiteSpace = true;
+$xml->formatOutput = false;
+$xml->loadXML($data);
+
+$signedXml = $xmlSigner->signDocument($xml);
 ```
 
 Output:
@@ -103,42 +129,102 @@ Output:
 </root>
 ```
 
+#### Signing only specific part of an XML document
+
+Example:
+
+```php
+use Selective\XmlDSig\Algorithm;
+use Selective\XmlDSig\CryptoSigner;
+use Selective\XmlDSig\PrivateKeyStore;
+use Selective\XmlDSig\XmlSigner;
+use DOMDocument;
+use DOMXPath;
+// ...
+
+// Load the XML content you want to sign
+$xml = new DOMDocument();
+$xml->preserveWhiteSpace = true;
+$xml->formatOutput = false;
+$xml->loadXML($data);
+
+// Create a XPATH query to select the element you want to sign 
+$xpath = new DOMXPath($xml);
+
+// Change this query according to your requirements
+$referenceUri = '#1';
+$elementToSign = $xpath->query( '//*[@Id="'. $referenceUri .'"]' )->item(0);
+
+// Add private key
+$privateKeyStore = new PrivateKeyStore();
+$privateKeyStore->loadPrivateKey('private key content', 'password');
+
+$cryptoSigner = new CryptoSigner($privateKeyStore, new Algorithm(Algorithm::DIGEST_SHA1));
+
+// Sign the element
+$xmlSigner = new XmlSigner($cryptoSigner);
+$signedXml = $xmlSigner->signDocument($xml, $elementToSign);
+```
+
 ### Verify the Digital Signatures of XML Documents
 
-```php
-use Selective\XmlDSig\OpenSslCryptoDecoder;
-use Selective\XmlDSig\XmlSignatureValidator;
+Load the public key(s):
 
-// Create a crypto decoder instance
-$cryptoDecoder = new OpenSslCryptoDecoder();
+```php
+use Selective\XmlDSig\PublicKeyStore;
+use Selective\XmlDSig\CryptoVerifier;
+use Selective\XmlDSig\XmlSignatureVerifier;
+
+$publicKeyStore = new PublicKeyStore();
 
 // load a public key from a string
-$cryptoDecoder->loadPublicKey('public key content');
+$publicKeyStore->loadFromPem('public key content');
 
 // or load a public key file
-$cryptoDecoder->loadPublicKey(file_get_contents('cacert.pem'));
+$publicKeyStore->loadFromPem(file_get_contents('cacert.pem'));
 
 // or load a public key from a PKCS#12 certificate string
-$cryptoDecoder->loadPfx('public key content', 'password');
+$publicKeyStore->loadFromPkcs12('public key content', 'password');
 
 // or load a public key from a PKCS#12 certificate file
-$cryptoDecoder->loadPfx(file_get_contents('filename.pfx'), 'password');
+$publicKeyStore->loadFromPkcs12(file_get_contents('filename.pfx'), 'password');
+
+// Load public keys from DOMDocument X509Certificate nodes
+$publicKeyStore->loadFromDocument($xml);
+
+// Load public key from existing OpenSSLCertificate resource
+$publicKeyStore->loadFromCertificate($certificate);
 ```
 
+Create a `CryptoVerifier` instance:
+
 ```php
+use Selective\XmlDSig\CryptoVerifier;
+
+$cryptoVerifier = new CryptoVerifier($publicKeyStore);
+```
+
+Verifying:
+
+```php
+use Selective\XmlDSig\XmlSignatureVerifier;
+
 // Create a verifier instance and pass the crypto decoder
-$signatureValidator = new XmlSignatureValidator($cryptoDecoder);
+$xmlSignatureVerifier = new XmlSignatureVerifier($cryptoVerifier);
 
-// or create a verifier instance that does not remove redundant white spaces
-$signatureValidator = new XmlSignatureValidator($cryptoDecoder, false);
-```
-
-```php
-// or verify XML from a string
-$isValid = $signatureValidator->verifyXml('xml content');
+// Verify XML from a string
+$isValid = $xmlSignatureVerifier->verifyXml($signedXml);
 
 // or verify a XML file
-$isValid = $signatureValidator->verifyXml(file_get_contents('signed-example.xml'));
+$isValid = $xmlSignatureVerifier->verifyXml(file_get_contents('signed.xml'));
+
+// or verifying an DOMDocument instance
+$xml = new DOMDocument();
+$xml->preserveWhiteSpace = true;
+$xml->formatOutput = false;
+$xml->loadXML($data);
+
+$isValid = $xmlSignatureVerifier->verifyDocument($xml);
 
 if ($isValid === true) {
     echo 'The XML signature is valid.';

@@ -11,9 +11,9 @@ use Selective\XmlDSig\Exception\XmlSignatureValidatorException;
 /**
  * Verify the Digital Signatures of XML Documents.
  */
-final class XmlSignatureValidator
+final class XmlSignatureVerifier
 {
-    private CryptoDecoderInterface $cryptoDecoder;
+    private CryptoVerifierInterface $cryptoVerifier;
 
     private XmlReader $xmlReader;
 
@@ -22,12 +22,12 @@ final class XmlSignatureValidator
     /**
      * The constructor.
      *
-     * @param CryptoDecoderInterface $cryptoDecoder
+     * @param CryptoVerifierInterface $cryptoVerifier
      * @param bool $preserveWhiteSpace To remove redundant white spaces
      */
-    public function __construct(CryptoDecoderInterface $cryptoDecoder, bool $preserveWhiteSpace = true)
+    public function __construct(CryptoVerifierInterface $cryptoVerifier, bool $preserveWhiteSpace = true)
     {
-        $this->cryptoDecoder = $cryptoDecoder;
+        $this->cryptoVerifier = $cryptoVerifier;
         $this->preserveWhiteSpace = $preserveWhiteSpace;
         $this->xmlReader = new XmlReader();
     }
@@ -55,6 +55,18 @@ final class XmlSignatureValidator
             throw new XmlSignatureValidatorException('Invalid XML content');
         }
 
+        return $this->verifyDocument($xml);
+    }
+
+    /**
+     * Verify XML document.
+     *
+     * @param DOMDocument $xml The document
+     *
+     * @return bool The status
+     */
+    public function verifyDocument(DOMDocument $xml): bool
+    {
         $digestAlgorithm = $this->getDigestAlgorithm($xml);
         $signatureValue = $this->getSignatureValue($xml);
         $xpath = new DOMXPath($xml);
@@ -77,7 +89,7 @@ final class XmlSignatureValidator
             $xml2->loadXML($canonicalData);
             $canonicalData = $xml2->C14N(true, false);
 
-            $isValidSignature = $this->cryptoDecoder->verify($canonicalData, $signatureValue, $digestAlgorithm);
+            $isValidSignature = $this->cryptoVerifier->verify($canonicalData, $signatureValue, $digestAlgorithm);
 
             if (!$isValidSignature) {
                 // The XML signature is not valid
@@ -114,7 +126,7 @@ final class XmlSignatureValidator
         // Canonicalize the content, exclusive and without comments
         $canonicalData = $xml->C14N(true, false);
 
-        $digestValue2 = $this->cryptoDecoder->computeDigest($canonicalData, $algorithm);
+        $digestValue2 = $this->cryptoVerifier->computeDigest($canonicalData, $algorithm);
 
         return hash_equals($digestValue, $digestValue2);
     }

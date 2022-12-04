@@ -3,10 +3,12 @@
 namespace Selective\XmlDSig\Test;
 
 use PHPUnit\Framework\TestCase;
-use Selective\XmlDSig\DigestAlgorithmType;
-use Selective\XmlDSig\OpenSslCryptoDecoder;
-use Selective\XmlDSig\OpenSslCryptoEncoder;
-use Selective\XmlDSig\XmlSignatureValidator;
+use Selective\XmlDSig\Algorithm;
+use Selective\XmlDSig\CryptoSigner;
+use Selective\XmlDSig\CryptoVerifier;
+use Selective\XmlDSig\PrivateKeyStore;
+use Selective\XmlDSig\PublicKeyStore;
+use Selective\XmlDSig\XmlSignatureVerifier;
 use Selective\XmlDSig\XmlSigner;
 
 /**
@@ -37,38 +39,43 @@ class XmlSignatureTest extends TestCase
         ];
 
         $algos = [
-            DigestAlgorithmType::SHA1,
-            DigestAlgorithmType::SHA224,
-            DigestAlgorithmType::SHA256,
-            DigestAlgorithmType::SHA384,
-            DigestAlgorithmType::SHA512,
+            Algorithm::DIGEST_SHA1,
+            Algorithm::DIGEST_SHA224,
+            Algorithm::DIGEST_SHA256,
+            Algorithm::DIGEST_SHA384,
+            Algorithm::DIGEST_SHA512,
         ];
 
         foreach ($files as $filename) {
             foreach ($algos as $algo) {
-                $cryptoEncoder = new OpenSslCryptoEncoder($algo);
-                $xmlSigner = new XmlSigner($cryptoEncoder);
+                $privateKeyStore = new PrivateKeyStore();
 
                 if (pathinfo($privateKeyFile, PATHINFO_EXTENSION) === 'pfx') {
-                    $cryptoEncoder->loadPfx(file_get_contents($privateKeyFile), $password);
+                    $privateKeyStore->loadFromPkcs12(file_get_contents($privateKeyFile), $password);
                 } else {
-                    $cryptoEncoder->loadPrivateKey(file_get_contents($privateKeyFile), $password);
+                    $privateKeyStore->loadFromPem(file_get_contents($privateKeyFile), $password);
                 }
 
+                $algorithm = new Algorithm($algo);
+                $cryptoSigner = new CryptoSigner($privateKeyStore, $algorithm);
+
+                $xmlSigner = new XmlSigner($cryptoSigner);
                 $xmlSigner->setReferenceUri('');
+
                 $signedXml = $xmlSigner->signXml(file_get_contents($filename));
 
                 // verify
-                $cryptoDecoder = new OpenSslCryptoDecoder();
-                $verifyXml = new XmlSignatureValidator($cryptoDecoder);
-
+                $publicKeyStore = new PublicKeyStore();
                 if (pathinfo($publicKeyFile, PATHINFO_EXTENSION) === 'pfx') {
-                    $cryptoDecoder->loadPfx(file_get_contents($publicKeyFile), $password);
+                    $publicKeyStore->loadFromPkcs12(file_get_contents($publicKeyFile), $password);
                 } else {
-                    $cryptoDecoder->loadPublicKey(file_get_contents($publicKeyFile));
+                    $publicKeyStore->loadFromPem(file_get_contents($publicKeyFile));
                 }
 
-                $isValid = $verifyXml->verifyXml($signedXml);
+                $cryptoVerifier = new CryptoVerifier($publicKeyStore);
+                $xmlSignatureVerifier = new XmlSignatureVerifier($cryptoVerifier);
+
+                $isValid = $xmlSignatureVerifier->verifyXml($signedXml);
 
                 $this->assertTrue($isValid);
             }

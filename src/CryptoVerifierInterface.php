@@ -2,7 +2,7 @@
 
 namespace Selective\XmlDSig;
 
-interface CryptoDecoderInterface
+interface CryptoVerifierInterface
 {
     public function verify(string $data, string $signature, string $algorithm): bool;
 

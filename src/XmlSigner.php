@@ -3,7 +3,9 @@
 namespace Selective\XmlDSig;
 
 use DOMDocument;
+use DOMElement;
 use DOMXPath;
+use OpenSSLCertificate;
 use Selective\XmlDSig\Exception\XmlSignerException;
 use UnexpectedValueException;
 
@@ -16,12 +18,12 @@ final class XmlSigner
 
     private XmlReader $xmlReader;
 
-    private CryptoEncoderInterface $crytoEncoder;
+    private CryptoSignerInterface $cryptoSigner;
 
-    public function __construct(CryptoEncoderInterface $crytoEncoder)
+    public function __construct(CryptoSignerInterface $cryptoSigner)
     {
         $this->xmlReader = new XmlReader();
-        $this->crytoEncoder = $crytoEncoder;
+        $this->cryptoSigner = $cryptoSigner;
     }
 
     /**
@@ -47,21 +49,40 @@ final class XmlSigner
 
         // Canonicalize the content, exclusive and without comments
         if (!$xml->documentElement) {
-            throw new UnexpectedValueException('Undefined document element');
+            throw new XmlSignerException('Undefined document element');
         }
 
-        $canonicalData = $xml->documentElement->C14N(true, false);
+        return $this->signDocument($xml);
+    }
+
+    /**
+     * Sign DOM document.
+     *
+     * @param DOMDocument $document The document
+     * @param DOMElement|null $element The element of the document to sign
+     *
+     * @return string The signed XML as string
+     */
+    public function signDocument(DOMDocument $document, DOMElement $element = null): string
+    {
+        $element = $element ?? $document->documentElement;
+
+        if ($element === null) {
+            throw new XmlSignerException('Invalid XML document element');
+        }
+
+        $canonicalData = $element->C14N(true, false);
 
         // Calculate and encode digest value
-        $digestValue = $this->crytoEncoder->computeDigest($canonicalData);
+        $digestValue = $this->cryptoSigner->computeDigest($canonicalData);
 
         $digestValue = base64_encode($digestValue);
-        $this->appendSignature($xml, $digestValue);
+        $this->appendSignature($document, $digestValue);
 
-        $result = $xml->saveXML();
+        $result = $document->saveXML();
 
         if ($result === false) {
-            throw new UnexpectedValueException('Signing failed. Invalid XML.');
+            throw new XmlSignerException('Signing failed. Invalid XML.');
         }
 
         return $result;
@@ -99,7 +120,10 @@ final class XmlSigner
         $signedInfoElement->appendChild($canonicalizationMethodElement);
 
         $signatureMethodElement = $xml->createElement('SignatureMethod');
-        $signatureMethodElement->setAttribute('Algorithm', $this->crytoEncoder->getSignatureAlgorithm());
+        $signatureMethodElement->setAttribute(
+            'Algorithm',
+            $this->cryptoSigner->getAlgorithm()->getSignatureAlgorithm()
+        );
         $signedInfoElement->appendChild($signatureMethodElement);
 
         $referenceElement = $xml->createElement('Reference');
@@ -115,7 +139,7 @@ final class XmlSigner
         $transformsElement->appendChild($transformElement);
 
         $digestMethodElement = $xml->createElement('DigestMethod');
-        $digestMethodElement->setAttribute('Algorithm', $this->crytoEncoder->getDigestAlgorithm());
+        $digestMethodElement->setAttribute('Algorithm', $this->cryptoSigner->getAlgorithm()->getDigestAlgorithm());
         $referenceElement->appendChild($digestMethodElement);
 
         $digestValueElement = $xml->createElement('DigestValue', $digestValue);
@@ -133,20 +157,55 @@ final class XmlSigner
         $rsaKeyValueElement = $xml->createElement('RSAKeyValue');
         $keyValueElement->appendChild($rsaKeyValueElement);
 
-        $modulusElement = $xml->createElement('Modulus', $this->crytoEncoder->getModulus());
-        $rsaKeyValueElement->appendChild($modulusElement);
+        $modulus = $this->cryptoSigner->getPrivateKeyStore()->getModulus();
+        if ($modulus) {
+            $modulusElement = $xml->createElement('Modulus', $modulus);
+            $rsaKeyValueElement->appendChild($modulusElement);
+        }
 
-        $exponentElement = $xml->createElement('Exponent', $this->crytoEncoder->getPublicExponent());
-        $rsaKeyValueElement->appendChild($exponentElement);
+        $publicExponent = $this->cryptoSigner->getPrivateKeyStore()->getPublicExponent();
+        if ($publicExponent) {
+            $exponentElement = $xml->createElement('Exponent', $publicExponent);
+            $rsaKeyValueElement->appendChild($exponentElement);
+        }
+
+        // If certificates are loaded attach them to the KeyInfo element
+        $certificates = $this->cryptoSigner->getPrivateKeyStore()->getCertificates();
+        if ($certificates) {
+            $this->appendX509Certificates($xml, $keyInfoElement, $certificates);
+        }
 
         // http://www.soapclient.com/XMLCanon.html
         $c14nSignedInfo = $signedInfoElement->C14N(true, false);
 
-        $signatureValue = $this->crytoEncoder->computeSignature($c14nSignedInfo);
+        $signatureValue = $this->cryptoSigner->computeSignature($c14nSignedInfo);
 
         $xpath = new DOMXpath($xml);
         $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//SignatureValue', $signatureElement);
         $signatureValueElement->nodeValue = base64_encode($signatureValue);
+    }
+
+    /**
+     * Create and append an X509Data element containing certificates in base64 format.
+     *
+     * @param DOMDocument $xml
+     * @param DOMElement $keyInfoElement
+     * @param OpenSSLCertificate[] $certificates
+     *
+     * @return void
+     */
+    private function appendX509Certificates(DOMDocument $xml, DOMElement $keyInfoElement, array $certificates): void
+    {
+        $x509DataElement = $xml->createElement('X509Data');
+        $keyInfoElement->appendChild($x509DataElement);
+
+        $x509Reader = new X509Reader();
+        foreach ($certificates as $certificateId) {
+            $certificate = $x509Reader->toRawBase64($certificateId);
+
+            $x509CertificateElement = $xml->createElement('X509Certificate', $certificate);
+            $x509DataElement->appendChild($x509CertificateElement);
+        }
     }
 
     /**
