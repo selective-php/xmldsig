@@ -67,7 +67,8 @@ final class XmlSignatureVerifier
      */
     public function verifyDocument(DOMDocument $xml): bool
     {
-        $digestAlgorithm = $this->getDigestAlgorithm($xml);
+        $signatureAlgorithm = $this->getDocumentAlgorithm($xml, '//xmlns:SignedInfo/xmlns:SignatureMethod');
+        $digestAlgorithm = $this->getDocumentAlgorithm($xml, '//xmlns:DigestMethod');
         $signatureValue = $this->getSignatureValue($xml);
         $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
@@ -89,7 +90,7 @@ final class XmlSignatureVerifier
             $xml2->loadXML($canonicalData);
             $canonicalData = $xml2->C14N(true, false);
 
-            $isValidSignature = $this->cryptoVerifier->verify($canonicalData, $signatureValue, $digestAlgorithm);
+            $isValidSignature = $this->cryptoVerifier->verify($canonicalData, $signatureValue, $signatureAlgorithm);
 
             if (!$isValidSignature) {
                 // The XML signature is not valid
@@ -135,18 +136,19 @@ final class XmlSignatureVerifier
      * Detect digest algorithm.
      *
      * @param DOMDocument $xml The xml document
+     * @param string $expression
      *
      * @throws XmlSignatureValidatorException
      *
      * @return string The algorithm url
      */
-    private function getDigestAlgorithm(DOMDocument $xml): string
+    private function getDocumentAlgorithm(DOMDocument $xml, string $expression): string
     {
         $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
         $xpath->registerNamespace('Algorithm', 'http://www.w3.org/TR/2001/REC-xml-c14n-20010315');
 
-        $signatureMethodNodes = $xpath->query('//xmlns:Signature/xmlns:SignedInfo/xmlns:SignatureMethod');
+        $signatureMethodNodes = $xpath->query($expression);
 
         // Throw an exception if no signature was found.
         if (!$signatureMethodNodes || $signatureMethodNodes->length < 1) {

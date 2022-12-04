@@ -112,8 +112,13 @@ final class PrivateKeyStore
         }
 
         $key = $this->getPrivateKeyDetailKey($details['type']);
-        $this->modulus = base64_encode($details[$key]['n']);
-        $this->publicExponent = base64_encode($details[$key]['e']);
+
+        if (isset($details[$key]['n'])) {
+            $this->modulus = base64_encode($details[$key]['n']);
+        }
+        if (isset($details[$key]['e'])) {
+            $this->publicExponent = base64_encode($details[$key]['e']);
+        }
     }
 
     /**

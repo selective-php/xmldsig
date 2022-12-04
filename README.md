@@ -66,7 +66,7 @@ Define the digest method: sha1, sha224, sha256, sha384, sha512
 ```php
 use Selective\XmlDSig\Algorithm;
 
-$algorithm = new Algorithm(Algorithm::DIGEST_SHA1);
+$algorithm = new Algorithm(Algorithm::METHOD_SHA1);
 ```
 
 Create a `CryptoSigner` instance:
@@ -159,12 +159,37 @@ $elementToSign = $xpath->query( '//*[@Id="'. $referenceUri .'"]' )->item(0);
 $privateKeyStore = new PrivateKeyStore();
 $privateKeyStore->loadPrivateKey('private key content', 'password');
 
-$cryptoSigner = new CryptoSigner($privateKeyStore, new Algorithm(Algorithm::DIGEST_SHA1));
+$cryptoSigner = new CryptoSigner($privateKeyStore, new Algorithm(Algorithm::METHOD_SHA1));
 
 // Sign the element
 $xmlSigner = new XmlSigner($cryptoSigner);
 $signedXml = $xmlSigner->signDocument($xml, $elementToSign);
 ```
+
+### Signing an XML Document with ECDSA SHA256
+
+The Elliptic Curve Digital Signature Algorithm (ECDSA) is the elliptic curve
+analogue of the Digital Signature Algorithm (DSA).
+
+It is compatible with OpenSSL and uses elegant math such as Jacobian Coordinates
+to speed up the ECDSA on pure PHP.
+
+**Requirements**
+
+* The [GMP extension](https://www.php.net/manual/en/book.gmp.php) must be installed and enabled.
+
+To install the package with Composer, run:
+
+```
+composer require starkbank/ecdsa
+```
+
+**Example**
+
+Note, you can sign an XML **signature** using ECDSA.
+It's not supported to use ECDSA for the **digest**.
+
+You can find a fully working example in the [XmlEcdsaTest](tests/XmlEcdsaTest.php) test class.
 
 ### Verify the Digital Signatures of XML Documents
 

@@ -39,11 +39,11 @@ class XmlSignatureTest extends TestCase
         ];
 
         $algos = [
-            Algorithm::DIGEST_SHA1,
-            Algorithm::DIGEST_SHA224,
-            Algorithm::DIGEST_SHA256,
-            Algorithm::DIGEST_SHA384,
-            Algorithm::DIGEST_SHA512,
+            Algorithm::METHOD_SHA1,
+            Algorithm::METHOD_SHA224,
+            Algorithm::METHOD_SHA256,
+            Algorithm::METHOD_SHA384,
+            Algorithm::METHOD_SHA512,
         ];
 
         foreach ($files as $filename) {
@@ -56,7 +56,7 @@ class XmlSignatureTest extends TestCase
                     $privateKeyStore->loadFromPem(file_get_contents($privateKeyFile), $password);
                 }
 
-                $algorithm = new Algorithm($algo);
+                $algorithm = new Algorithm($algo, $algo);
                 $cryptoSigner = new CryptoSigner($privateKeyStore, $algorithm);
 
                 $xmlSigner = new XmlSigner($cryptoSigner);

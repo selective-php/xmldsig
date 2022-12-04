@@ -33,7 +33,7 @@ final class PublicKeyStore
     /**
      * Return public keys.
      *
-     * @return OpenSSLAsymmetricKey[] The publix keys
+     * @return OpenSSLAsymmetricKey[] The public keys
      */
     public function getPublicKeys(): array
     {

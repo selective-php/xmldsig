@@ -122,7 +122,7 @@ final class XmlSigner
         $signatureMethodElement = $xml->createElement('SignatureMethod');
         $signatureMethodElement->setAttribute(
             'Algorithm',
-            $this->cryptoSigner->getAlgorithm()->getSignatureAlgorithm()
+            $this->cryptoSigner->getAlgorithm()->getSignatureAlgorithmUrl()
         );
         $signedInfoElement->appendChild($signatureMethodElement);
 
@@ -139,7 +139,7 @@ final class XmlSigner
         $transformsElement->appendChild($transformElement);
 
         $digestMethodElement = $xml->createElement('DigestMethod');
-        $digestMethodElement->setAttribute('Algorithm', $this->cryptoSigner->getAlgorithm()->getDigestAlgorithm());
+        $digestMethodElement->setAttribute('Algorithm', $this->cryptoSigner->getAlgorithm()->getDigestAlgorithmUrl());
         $referenceElement->appendChild($digestMethodElement);
 
         $digestValueElement = $xml->createElement('DigestValue', $digestValue);

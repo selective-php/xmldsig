@@ -19,7 +19,8 @@
         "friendsofphp/php-cs-fixer": "^3",
         "phpstan/phpstan": "^1",
         "phpunit/phpunit": "^9 || ^10",
-        "squizlabs/php_codesniffer": "^3"
+        "squizlabs/php_codesniffer": "^3",
+        "starkbank/ecdsa": "^2.0"
     },
     "autoload": {
         "psr-4": {

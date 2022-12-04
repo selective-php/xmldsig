@@ -2,6 +2,10 @@
 
 namespace Selective\XmlDSig;
 
+use EllipticCurve\Ecdsa;
+use EllipticCurve\PublicKey;
+use EllipticCurve\Signature;
+use OpenSSLAsymmetricKey;
 use Selective\XmlDSig\Exception\CertificateException;
 use Selective\XmlDSig\Exception\XmlSignatureValidatorException;
 
@@ -26,10 +30,14 @@ final class CryptoVerifier implements CryptoVerifierInterface
             throw new CertificateException('No public key provided');
         }
 
+        if (str_contains($algorithm, 'ecdsa')) {
+            return $this->verifyEcdsa($publicKeys, $signature, $data);
+        }
+
         $algo = $this->mapUrlToOpenSslAlgoCode($algorithm);
 
-        foreach ($publicKeys as $publicKeyId) {
-            $status = openssl_verify($data, $signature, $publicKeyId, $algo);
+        foreach ($publicKeys as $publicKey) {
+            $status = openssl_verify($data, $signature, $publicKey, $algo);
 
             if ($status === 1) {
                 return true;
@@ -42,20 +50,25 @@ final class CryptoVerifier implements CryptoVerifierInterface
 
     private function mapUrlToOpenSslAlgoCode(string $algorithm): int
     {
-        switch ($algorithm) {
-            case Algorithm::SIGNATURE_SHA1_URL:
-                return OPENSSL_ALGO_SHA1;
-            case Algorithm::SIGNATURE_SHA224_URL:
-                return OPENSSL_ALGO_SHA224;
-            case Algorithm::SIGNATURE_SHA256_URL:
-                return OPENSSL_ALGO_SHA256;
-            case Algorithm::SIGNATURE_SHA384_URL:
-                return OPENSSL_ALGO_SHA384;
-            case Algorithm::SIGNATURE_SHA512_URL:
-                return OPENSSL_ALGO_SHA512;
-            default:
-                throw new XmlSignatureValidatorException("Cannot verify: Unsupported Algorithm <$algorithm>");
+        $algorithm = strtolower($algorithm);
+
+        $hashes = [
+            Algorithm::METHOD_SHA1 => OPENSSL_ALGO_SHA1,
+            Algorithm::METHOD_SHA224 => OPENSSL_ALGO_SHA224,
+            Algorithm::METHOD_SHA256 => OPENSSL_ALGO_SHA256,
+            Algorithm::METHOD_SHA384 => OPENSSL_ALGO_SHA384,
+            Algorithm::METHOD_SHA512 => OPENSSL_ALGO_SHA512,
+        ];
+
+        foreach ($hashes as $hash => $ssl) {
+            if (str_contains($algorithm, $hash)) {
+                return $ssl;
+            }
         }
+
+        throw new XmlSignatureValidatorException(
+            sprintf('Cannot verify: Unsupported Algorithm: %s', $algorithm)
+        );
     }
 
     /**
@@ -67,20 +80,24 @@ final class CryptoVerifier implements CryptoVerifierInterface
      */
     private function mapUrlToOpenSslDigestAlgo(string $algorithm): string
     {
-        switch ($algorithm) {
-            case Algorithm::SIGNATURE_SHA1_URL:
-                return Algorithm::DIGEST_SHA1;
-            case Algorithm::SIGNATURE_SHA224_URL:
-                return Algorithm::DIGEST_SHA224;
-            case Algorithm::SIGNATURE_SHA256_URL:
-                return Algorithm::DIGEST_SHA256;
-            case Algorithm::SIGNATURE_SHA384_URL:
-                return Algorithm::DIGEST_SHA384;
-            case Algorithm::SIGNATURE_SHA512_URL:
-                return Algorithm::DIGEST_SHA512;
-            default:
-                throw new XmlSignatureValidatorException("Cannot verify: Unsupported Algorithm <$algorithm>");
+        $algorithm = strtolower($algorithm);
+
+        $hashes = [
+            Algorithm::METHOD_SHA1,
+            Algorithm::METHOD_SHA224,
+            Algorithm::METHOD_SHA256,
+            Algorithm::METHOD_SHA384,
+            Algorithm::METHOD_SHA512,
+            Algorithm::METHOD_ECDSA_SHA256,
+        ];
+
+        foreach ($hashes as $hash) {
+            if (str_contains($algorithm, $hash)) {
+                return $hash;
+            }
         }
+
+        throw new XmlSignatureValidatorException(sprintf('Unsupported algorithm: %s', $algorithm));
     }
 
     public function computeDigest(string $data, string $algorithm): string
@@ -93,5 +110,32 @@ final class CryptoVerifier implements CryptoVerifierInterface
         }
 
         return $digest;
+    }
+
+    /**
+     * Verify using the Elliptic Curve Digital Signature Algorithm (ECDSA).
+     *
+     * @param OpenSSLAsymmetricKey[] $publicKeys The public keys
+     * @param string $signature The signature from the xml element
+     * @param string $data The data
+     *
+     * @return bool The status
+     */
+    private function verifyEcdsa(array $publicKeys, string $signature, string $data): bool
+    {
+        foreach ($publicKeys as $publicKey) {
+            $signature = Signature::fromDer($signature);
+
+            // Convert OpenSSLAsymmetricKey to PEM string
+            $details = openssl_pkey_get_details($publicKey);
+            $publicKey2 = PublicKey::fromPem($details['key'] ?? '');
+
+            $status = Ecdsa::verify($data, $signature, $publicKey2);
+            if ($status) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
