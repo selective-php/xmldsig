@@ -100,12 +100,17 @@ final class PrivateKeyStore
      */
     public function loadFromPkcs12(string $pkcs12, string $password): void
     {
+        if (!$pkcs12) {
+            throw new CertificateException('The PKCS12 certificate must not be empty.');
+        }
+
         $status = openssl_pkcs12_read($pkcs12, $certInfo, $password);
 
         if (!$status) {
             throw new CertificateException(
                 'Invalid certificate. Could not read private key from PKCS12 certificate. ' .
-                openssl_error_string()
+                openssl_error_string() .
+                $pkcs12
             );
         }
 
