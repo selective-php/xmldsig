@@ -93,6 +93,9 @@ class XmlSignatureTest extends TestCase
 
         $keyFiles[] = [
             // Private and public key bundle
+            // openssl pkcs12 -export -out cert.p12 -in cacert.pem -inkey cakey.pem
+            // Enter: secret
+            // Enter 2x: 12345678
             __DIR__ . '/cert.p12',
             __DIR__ . '/cert.p12',
             '12345678',
