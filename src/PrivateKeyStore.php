@@ -103,7 +103,7 @@ final class PrivateKeyStore
         $status = openssl_pkcs12_read($pkcs12, $certInfo, $password);
 
         if (!$status) {
-            throw new CertificateException('Invalid certificate. Could not read from PKCS12 certificate.');
+            throw new CertificateException('Invalid certificate. Could not read private key from PKCS12 certificate.');
         }
 
         // Read the private key

@@ -55,7 +55,7 @@ final class PublicKeyStore
         $status = openssl_pkcs12_read($pkcs12, $certificates, $password);
 
         if (!$status) {
-            throw new CertificateException('Invalid PKCS12 certificate');
+            throw new CertificateException('Invalid certificate. Could not read public key from PKCS12 certificate.');
         }
 
         $publicKey = openssl_get_publickey($certificates['cert']);
