@@ -17,6 +17,8 @@ final class PrivateKeyStore
 
     private ?OpenSSLAsymmetricKey $privateKey = null;
 
+    private ?string $privateKeyPem = null;
+
     private ?string $modulus = null;
 
     private ?string $publicExponent = null;
@@ -60,6 +62,31 @@ final class PrivateKeyStore
     }
 
     /**
+     * Read and load a private key.
+     *
+     * @param string $pem The PEM formatted private key
+     * @param string $password The PEM password
+     *
+     * @throws XmlSignerException
+     *
+     * @return void
+     */
+    public function loadFromPem(string $pem, string $password): void
+    {
+        // Read the private key
+        $privateKey = openssl_pkey_get_private($pem, $password);
+
+        if (!$privateKey) {
+            throw new XmlSignerException('Invalid password or private key');
+        }
+
+        $this->privateKey = $privateKey;
+        $this->privateKeyPem = $pem;
+
+        $this->loadPrivateKeyDetails();
+    }
+
+    /**
      * Load the PKCS12 (PFX) content.
      *
      * PKCS12 is an encrypted container that contains the
@@ -81,7 +108,13 @@ final class PrivateKeyStore
         }
 
         // Read the private key
-        $privateKey = openssl_pkey_get_private((string)$certInfo['pkey']);
+        $this->privateKeyPem = (string)$certInfo['pkey'];
+
+        if (!$this->privateKeyPem) {
+            throw new CertificateException('Invalid or missing private key');
+        }
+
+        $privateKey = openssl_pkey_get_private($this->privateKeyPem);
 
         if (!$privateKey) {
             throw new CertificateException('Invalid private key');
@@ -139,33 +172,14 @@ final class PrivateKeyStore
         return $key;
     }
 
-    /**
-     * Read and load a private key.
-     *
-     * @param string $pem The PEM formatted private key
-     * @param string $password The PEM password
-     *
-     * @throws XmlSignerException
-     *
-     * @return void
-     */
-    public function loadFromPem(string $pem, string $password): void
-    {
-        // Read the private key
-        $privateKey = openssl_pkey_get_private($pem, $password);
-
-        if (!$privateKey) {
-            throw new XmlSignerException('Invalid password or private key');
-        }
-
-        $this->privateKey = $privateKey;
-
-        $this->loadPrivateKeyDetails();
-    }
-
     public function getPrivateKey(): ?OpenSSLAsymmetricKey
     {
         return $this->privateKey;
+    }
+
+    public function getPrivateKeyAsPem(): ?string
+    {
+        return $this->privateKeyPem;
     }
 
     public function getModulus(): ?string

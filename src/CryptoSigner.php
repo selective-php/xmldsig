@@ -28,34 +28,19 @@ final class CryptoSigner implements CryptoSignerInterface
 
     public function computeSignature(string $data): string
     {
+        // ECDSA
+        if ($this->algorithm->getSignatureAlgorithmName() === Algorithm::METHOD_ECDSA_SHA256) {
+            return $this->computeSignatureWithEcdsa($data);
+        }
+
+        // Default
         $privateKey = $this->privateKeyStore->getPrivateKey();
 
-        // Calculate and encode digest value
         if (!$privateKey) {
             throw new CertificateException('Undefined private key');
         }
 
-        // Algorithm::METHOD_ECDSA_SHA256
-        if ($this->algorithm->getSignatureAlgorithmName() === Algorithm::METHOD_ECDSA_SHA256) {
-            // Generate privateKey from PEM string
-            $privateKey = PrivateKey::fromPem(
-                '-----BEGIN EC PARAMETERS-----
-    BgUrgQQACg==
-    -----END EC PARAMETERS-----
-    -----BEGIN EC PRIVATE KEY-----
-    MHQCAQEEIODvZuS34wFbt0X53+P5EnSj6tMjfVK01dD1dgDH02RzoAcGBSuBBAAK
-    oUQDQgAE/nvHu/SQQaos9TUljQsUuKI15Zr5SabPrbwtbfT/408rkVVzq8vAisbB
-    RmpeRREXj5aog/Mq8RrdYy75W9q/Ig==
-    -----END EC PRIVATE KEY-----'
-            );
-            $signature = Ecdsa::sign($data, $privateKey);
-            $signatureValue = $signature->_toString();
-            $signatureValue2 = $signature->toBase64();
-            $signatureValue2 = base64_decode($signatureValue2);
-
-            return $signatureValue2;
-        }
-
+        // Calculate and encode digest value
         $status = openssl_sign($data, $signatureValue, $privateKey, $this->algorithm->getSignatureSslAlgorithm());
 
         if (!$status) {
@@ -63,6 +48,21 @@ final class CryptoSigner implements CryptoSignerInterface
         }
 
         return $signatureValue;
+    }
+
+    private function computeSignatureWithEcdsa(string $data): string
+    {
+        $privateKeyPem = $this->privateKeyStore->getPrivateKeyAsPem();
+
+        if (!$privateKeyPem) {
+            throw new CertificateException('Undefined private key');
+        }
+
+        // Generate privateKey from PEM string
+        $privateKey = PrivateKey::fromPem($privateKeyPem);
+        $signature = Ecdsa::sign($data, $privateKey);
+
+        return (string)base64_decode($signature->toBase64());
     }
 
     public function computeDigest(string $data): string
