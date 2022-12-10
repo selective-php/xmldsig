@@ -89,8 +89,7 @@ final class PrivateKeyStore
     /**
      * Load the PKCS12 (PFX) content.
      *
-     * PKCS12 is an encrypted container that contains the
-     * public key and private key combined in binary format.
+     * PKCS12 is an encrypted container that contains the public key and private key combined in binary format.
      *
      * @param string $pkcs12 The content
      * @param string $password The password
