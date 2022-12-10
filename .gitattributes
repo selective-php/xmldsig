@@ -40,5 +40,6 @@
 *.woff binary
 *.woff2 binary
 *.pfx binary
+*.p12 binary
 *.pem
 *.xml

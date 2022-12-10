@@ -50,7 +50,7 @@ class XmlSignatureTest extends TestCase
             foreach ($algos as $algo) {
                 $privateKeyStore = new PrivateKeyStore();
 
-                if (pathinfo($privateKeyFile, PATHINFO_EXTENSION) === 'pfx') {
+                if (pathinfo($privateKeyFile, PATHINFO_EXTENSION) === 'p12') {
                     $privateKeyStore->loadFromPkcs12(file_get_contents($privateKeyFile), $password);
                 } else {
                     $privateKeyStore->loadFromPem(file_get_contents($privateKeyFile), $password);
@@ -66,7 +66,7 @@ class XmlSignatureTest extends TestCase
 
                 // verify
                 $publicKeyStore = new PublicKeyStore();
-                if (pathinfo($publicKeyFile, PATHINFO_EXTENSION) === 'pfx') {
+                if (pathinfo($publicKeyFile, PATHINFO_EXTENSION) === 'p12') {
                     $publicKeyStore->loadFromPkcs12(file_get_contents($publicKeyFile), $password);
                 } else {
                     $publicKeyStore->loadFromPem(file_get_contents($publicKeyFile));
@@ -93,8 +93,8 @@ class XmlSignatureTest extends TestCase
 
         $keyFiles[] = [
             // Private and public key bundle
-            __DIR__ . '/localhost.pfx',
-            __DIR__ . '/localhost.pfx',
+            __DIR__ . '/cert.p12',
+            __DIR__ . '/cert.p12',
             '12345678',
         ];
 
