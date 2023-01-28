@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## 3.0.0
+
 ### Added
 
 - Add support for Elliptic Curve Digital Signature Algorithm ECDSA SHA256
@@ -11,6 +13,10 @@
 ### Changed
 
 - Require PHP 8
+
+### Breaking Changes
+
+- The package has been completely redesigned to meet the new requirements
 
 ## 2.0.0
 
