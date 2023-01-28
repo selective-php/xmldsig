@@ -90,7 +90,7 @@ final class PublicKeyStore
     /**
      * Load the public key content.
      *
-     * @param string $pem a PEM formatted public key
+     * @param string $pem A PEM formatted public key
      *
      * @throws CertificateException
      *
