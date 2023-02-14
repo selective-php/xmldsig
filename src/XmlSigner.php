@@ -36,7 +36,7 @@ final class XmlSigner
      *
      * @return string The signed XML content
      */
-    public function signXml(string $data): string
+    public function signXml(string $data, bool $onlySignature): string
     {
         // Read the xml file content
         $xml = new DOMDocument();
@@ -52,7 +52,7 @@ final class XmlSigner
             throw new XmlSignerException('Undefined document element');
         }
 
-        return $this->signDocument($xml);
+        return $this->signDocument($xml, null, $onlySignature);
     }
 
     /**
@@ -63,7 +63,7 @@ final class XmlSigner
      *
      * @return string The signed XML as string
      */
-    public function signDocument(DOMDocument $document, DOMElement $element = null): string
+    public function signDocument(DOMDocument $document, DOMElement $element = null, bool $onlySignature = false): string
     {
         $element = $element ?? $document->documentElement;
 
@@ -77,7 +77,7 @@ final class XmlSigner
         $digestValue = $this->cryptoSigner->computeDigest($canonicalData);
 
         $digestValue = base64_encode($digestValue);
-        $this->appendSignature($document, $digestValue);
+        $this->appendSignature($document, $digestValue, $onlySignature);
 
         $result = $document->saveXML();
 
@@ -98,7 +98,7 @@ final class XmlSigner
      *
      * @return void The DOM document
      */
-    private function appendSignature(DOMDocument $xml, string $digestValue): void
+    private function appendSignature(DOMDocument $xml, string $digestValue, bool $onlySignature = false): void
     {
         $signatureElement = $xml->createElement('Signature');
         $signatureElement->setAttribute('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
@@ -183,6 +183,10 @@ final class XmlSigner
         $xpath = new DOMXpath($xml);
         $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//SignatureValue', $signatureElement);
         $signatureValueElement->nodeValue = base64_encode($signatureValue);
+
+        if ($onlySignature) {
+            $xml->loadXML($signatureElement->C14N(true, false));
+        }
     }
 
     /**
