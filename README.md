@@ -15,7 +15,7 @@
 
 ## Requirements
 
-* PHP 8.0+
+* PHP 8.1+
 * The openssl extension
 * A X.509 digital certificate
 
