@@ -11,14 +11,14 @@
     ],
     "homepage": "https://github.com/selective-php/xmldsig",
     "require": {
-        "php": "~8.0 || ~8.1 || ~8.2",
+        "php": "~8.1 || ~8.2",
         "ext-dom": "*",
         "ext-openssl": "*"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3",
         "phpstan/phpstan": "^1",
-        "phpunit/phpunit": "^9 || ^10",
+        "phpunit/phpunit": "^10",
         "squizlabs/php_codesniffer": "^3",
         "starkbank/ecdsa": "^2.0"
     },
@@ -43,11 +43,11 @@
         ],
         "cs:fix": [
             "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
-            "php-cs-fixer fix --config=.cs.php --ansi"
+            "php-cs-fixer fix --config=.cs.php --ansi --verbose"
         ],
         "sniffer:check": "phpcs --standard=phpcs.xml",
         "sniffer:fix": "phpcbf --standard=phpcs.xml",
-        "stan": "phpstan analyse -c phpstan.neon --no-progress --ansi --xdebug",
+        "stan": "phpstan analyse -c phpstan.neon --no-progress --ansi",
         "test": "phpunit --configuration phpunit.xml --do-not-cache-result --colors=always",
         "test:all": [
             "@cs:check",

@@ -16,7 +16,7 @@ use Selective\XmlDSig\XmlSigner;
  *
  * @coversDefaultClass \Selective\XmlDSig\XmlSigner
  */
-class XmlSignatureTest extends TestCase
+final class XmlSignatureTest extends TestCase
 {
     /**
      * Test.
@@ -87,7 +87,7 @@ class XmlSignatureTest extends TestCase
      *
      * @return array<int, mixed> The data
      */
-    public function providerTestSignAndVerify(): array
+    public static function providerTestSignAndVerify(): array
     {
         $keyFiles = [];
 

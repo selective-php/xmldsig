@@ -3,9 +3,16 @@
          bootstrap="vendor/autoload.php"
          colors="true"
          backupGlobals="false"
-         backupStaticAttributes="false"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
-    <coverage processUncoveredFiles="false">
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.3/phpunit.xsd"
+         cacheDirectory=".phpunit.cache"
+         backupStaticProperties="false">
+    <coverage/>
+    <testsuites>
+        <testsuite name="Tests">
+            <directory suffix="Test.php">tests</directory>
+        </testsuite>
+    </testsuites>
+    <source>
         <include>
             <directory suffix=".php">src</directory>
         </include>
@@ -13,10 +20,5 @@
             <directory>vendor</directory>
             <directory>build</directory>
         </exclude>
-    </coverage>
-    <testsuites>
-        <testsuite name="Tests">
-            <directory suffix="Test.php">tests</directory>
-        </testsuite>
-    </testsuites>
+    </source>
 </phpunit>

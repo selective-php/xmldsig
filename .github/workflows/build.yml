@@ -3,38 +3,39 @@ name: build
 on: [ push, pull_request ]
 
 jobs:
-  run:
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      matrix:
-        operating-system: [ ubuntu-latest ]
-        php-versions: [ '8.0', '8.1', '8.2' ]
-    name: PHP ${{ matrix.php-versions }} Test on ${{ matrix.operating-system }}
+    run:
+        runs-on: ${{ matrix.operating-system }}
+        strategy:
+            matrix:
+                operating-system: [ ubuntu-latest ]
+                php-versions: [ '8.1', '8.2' ]
+        name: PHP ${{ matrix.php-versions }} Test on ${{ matrix.operating-system }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v1
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v1
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-versions }}
-          coverage: none
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php-versions }}
+                    extensions: mbstring, intl, zip, gmp
+                    coverage: none
 
-      - name: Check PHP Version
-        run: php -v
+            -   name: Check PHP Version
+                run: php -v
 
-      - name: Check Composer Version
-        run: composer -V
+            -   name: Check Composer Version
+                run: composer -V
 
-      - name: Check PHP Extensions
-        run: php -m
+            -   name: Check PHP Extensions
+                run: php -m
 
-      - name: Validate composer.json and composer.lock
-        run: composer validate
+            -   name: Validate composer.json and composer.lock
+                run: composer validate
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+            -   name: Install dependencies
+                run: composer install --prefer-dist --no-progress --no-suggest
 
-      - name: Run test suite
-        run: composer test:all
+            -   name: Run test suite
+                run: composer test:all
