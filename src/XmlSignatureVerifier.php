@@ -28,8 +28,11 @@ final class XmlSignatureVerifier
      * @param bool $preserveWhiteSpace To remove redundant white spaces
      * @param bool $exclusive Exclusive canonicalization. @see https://www.php.net/manual/en/domnode.c14n.php
      */
-    public function __construct(CryptoVerifierInterface $cryptoVerifier, bool $preserveWhiteSpace = true, bool $exclusive = true)
-    {
+    public function __construct(
+        CryptoVerifierInterface $cryptoVerifier, 
+        bool $preserveWhiteSpace = true, 
+        bool $exclusive = true,
+    ) {
         $this->cryptoVerifier = $cryptoVerifier;
         $this->preserveWhiteSpace = $preserveWhiteSpace;
         $this->exclusive = $exclusive;

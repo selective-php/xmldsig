@@ -24,8 +24,11 @@ final class XmlSigner
 
     private bool $exclusive;
 
-    public function __construct(CryptoSignerInterface $cryptoSigner, bool $preserveWhiteSpace = true, bool $exclusive = true)
-    {
+    public function __construct(
+        CryptoSignerInterface $cryptoSigner, 
+        bool $preserveWhiteSpace = true, 
+        bool $exclusive = true,
+    ) {
         $this->xmlReader = new XmlReader();
         $this->preserveWhiteSpace = $preserveWhiteSpace;
         $this->exclusive = $exclusive;
