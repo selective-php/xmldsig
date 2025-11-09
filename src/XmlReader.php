@@ -2,6 +2,7 @@
 
 namespace Selective\XmlDSig;
 
+use DOMNameSpaceNode;
 use DOMNode;
 use DOMXPath;
 use UnexpectedValueException;
@@ -20,9 +21,9 @@ final class XmlReader
      *
      * @throws UnexpectedValueException
      *
-     * @return DOMNode The first item
+     * @return DOMNameSpaceNode|DOMNode The first item
      */
-    public function queryDomNode(DOMXPath $xpath, string $expression, DOMNode $contextNode): DOMNode
+    public function queryDomNode(DOMXPath $xpath, string $expression, DOMNode $contextNode): DOMNameSpaceNode|DOMNode
     {
         $nodeList = $xpath->query($expression, $contextNode);
 

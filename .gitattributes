@@ -15,11 +15,11 @@
 /tests              export-ignore
 /build              export-ignore
 /docs               export-ignore
+/.github            export-ignore
 /build.xml          export-ignore
 /phpunit.xml        export-ignore
 /.gitattributes     export-ignore
 /.gitignore         export-ignore
-/.scrutinizer.*     export-ignore
 /.editorconfig      export-ignore
 
 # Define binary file attributes.

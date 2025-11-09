@@ -2,6 +2,8 @@
 
 namespace Selective\XmlDSig\Test;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Selective\XmlDSig\Algorithm;
 use Selective\XmlDSig\CryptoSigner;
@@ -16,6 +18,7 @@ use Selective\XmlDSig\XmlSigner;
  *
  * @coversDefaultClass \Selective\XmlDSig\XmlSigner
  */
+#[CoversClass(XmlSigner::class)]
 final class XmlSignatureTest extends TestCase
 {
     /**
@@ -29,6 +32,7 @@ final class XmlSignatureTest extends TestCase
      *
      * @return void
      */
+    #[DataProvider('providerTestSignAndVerify')]
     public function testSignAndVerify(string $privateKeyFile, string $publicKeyFile, string $password)
     {
         $files = [

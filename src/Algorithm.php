@@ -56,7 +56,7 @@ final class Algorithm
      * @param string $signatureMethodAlgorithm
      * @param string|null $digestMethodAlgorithm
      */
-    public function __construct(string $signatureMethodAlgorithm, string $digestMethodAlgorithm = null)
+    public function __construct(string $signatureMethodAlgorithm, ?string $digestMethodAlgorithm = null)
     {
         $this->setSignatureMethodAlgorithm($signatureMethodAlgorithm);
         $this->setDigestMethodAlgorithm($digestMethodAlgorithm ?? $signatureMethodAlgorithm);

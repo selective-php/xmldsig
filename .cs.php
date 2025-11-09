@@ -9,9 +9,8 @@ return (new Config())
         [
             '@PSR1' => true,
             '@PSR2' => true,
-            '@Symfony' => true,
-            'psr_autoloading' => true,
             // custom rules
+            'psr_autoloading' => true,
             'align_multiline_comment' => ['comment_type' => 'phpdocs_only'], // psr-5
             'phpdoc_to_comment' => false,
             'no_superfluous_phpdoc_tags' => false,
@@ -19,7 +18,7 @@ return (new Config())
             'array_syntax' => ['syntax' => 'short'],
             'cast_spaces' => ['space' => 'none'],
             'concat_space' => ['spacing' => 'one'],
-            'compact_nullable_typehint' => true,
+            'compact_nullable_type_declaration' => true,
             'declare_equal_normalize' => ['space' => 'single'],
             'general_phpdoc_annotation_remove' => [
                 'annotations' => [
@@ -36,7 +35,11 @@ return (new Config())
             'phpdoc_order' => true, // psr-5
             'phpdoc_no_useless_inheritdoc' => false,
             'protected_to_private' => false,
-            'yoda_style' => false,
+            'yoda_style' => [
+                'equal' => false,
+                'identical' => false,
+                'less_and_greater' => false
+            ],
             'method_argument_space' => ['on_multiline' => 'ensure_fully_multiline'],
             'ordered_imports' => [
                 'sort_algorithm' => 'alpha',
@@ -47,6 +50,7 @@ return (new Config())
             'blank_line_between_import_groups' => true,
             'fully_qualified_strict_types' => true,
             'no_null_property_initialization' => false,
+            'nullable_type_declaration_for_default_null_value' => false,
             'operator_linebreak' => [
                 'only_booleans' => true,
                 'position' => 'beginning',
@@ -55,6 +59,16 @@ return (new Config())
                 'import_classes' => true,
                 'import_constants' => null,
                 'import_functions' => null
+            ],
+            'class_definition' => [
+                'space_before_parenthesis' => true,
+            ],
+            'trailing_comma_in_multiline' => [
+                'after_heredoc' => true,
+                'elements' => ['array_destructuring', 'arrays', 'match']
+            ],
+            'function_declaration' => [
+                'closure_fn_spacing' => 'none',
             ]
         ]
     )

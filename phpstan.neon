@@ -1,10 +1,11 @@
 parameters:
 	level: 8
-	checkGenericClassInNonGenericObjectType: false
 	reportUnmatchedIgnoredErrors: false
+	treatPhpDocTypesAsCertain: false
 	paths:
 		- src
 	ignoreErrors:
+		- identifier: missingType.generics
 		- '#has unknown class OpenSSLAsymmetricKey as its type#'
 		- '#(.*)OpenSSLAsymmetricKey(.*)null(.*) does not accept resource#'
 		- '#openssl_free_key expects resource(.*) OpenSSLAsymmetricKey given#'

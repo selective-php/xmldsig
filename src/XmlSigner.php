@@ -63,7 +63,7 @@ final class XmlSigner
      *
      * @return string The signed XML as string
      */
-    public function signDocument(DOMDocument $document, DOMElement $element = null): string
+    public function signDocument(DOMDocument $document, ?DOMElement $element = null): string
     {
         $element = $element ?? $document->documentElement;
 
@@ -180,7 +180,7 @@ final class XmlSigner
 
         $signatureValue = $this->cryptoSigner->computeSignature($c14nSignedInfo);
 
-        $xpath = new DOMXpath($xml);
+        $xpath = new DOMXPath($xml);
         $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//SignatureValue', $signatureElement);
         $signatureValueElement->nodeValue = base64_encode($signatureValue);
     }
