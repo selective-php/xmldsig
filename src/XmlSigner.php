@@ -20,9 +20,18 @@ final class XmlSigner
 
     private CryptoSignerInterface $cryptoSigner;
 
-    public function __construct(CryptoSignerInterface $cryptoSigner)
-    {
+    private bool $preserveWhiteSpace;
+
+    private bool $exclusive;
+
+    public function __construct(
+        CryptoSignerInterface $cryptoSigner, 
+        bool $preserveWhiteSpace = true, 
+        bool $exclusive = true,
+    ) {
         $this->xmlReader = new XmlReader();
+        $this->preserveWhiteSpace = $preserveWhiteSpace;
+        $this->exclusive = $exclusive;
         $this->cryptoSigner = $cryptoSigner;
     }
 
@@ -42,7 +51,7 @@ final class XmlSigner
         $xml = new DOMDocument();
 
         // Whitespaces must be preserved
-        $xml->preserveWhiteSpace = true;
+        $xml->preserveWhiteSpace = $this->preserveWhiteSpace;
         $xml->formatOutput = false;
 
         $xml->loadXML($data);
@@ -71,7 +80,7 @@ final class XmlSigner
             throw new XmlSignerException('Invalid XML document element');
         }
 
-        $canonicalData = $element->C14N(true, false);
+        $canonicalData = $element->C14N($this->exclusive, false);
 
         // Calculate and encode digest value
         $digestValue = $this->cryptoSigner->computeDigest($canonicalData);
@@ -176,7 +185,7 @@ final class XmlSigner
         }
 
         // http://www.soapclient.com/XMLCanon.html
-        $c14nSignedInfo = $signedInfoElement->C14N(true, false);
+        $c14nSignedInfo = $signedInfoElement->C14N($this->exclusive, false);
 
         $signatureValue = $this->cryptoSigner->computeSignature($c14nSignedInfo);
 

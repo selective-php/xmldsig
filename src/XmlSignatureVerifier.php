@@ -19,16 +19,23 @@ final class XmlSignatureVerifier
 
     private bool $preserveWhiteSpace;
 
+    private bool $exclusive;
+
     /**
      * The constructor.
      *
      * @param CryptoVerifierInterface $cryptoVerifier
      * @param bool $preserveWhiteSpace To remove redundant white spaces
+     * @param bool $exclusive Exclusive canonicalization. @see https://www.php.net/manual/en/domnode.c14n.php
      */
-    public function __construct(CryptoVerifierInterface $cryptoVerifier, bool $preserveWhiteSpace = true)
-    {
+    public function __construct(
+        CryptoVerifierInterface $cryptoVerifier, 
+        bool $preserveWhiteSpace = true, 
+        bool $exclusive = true,
+    ) {
         $this->cryptoVerifier = $cryptoVerifier;
         $this->preserveWhiteSpace = $preserveWhiteSpace;
+        $this->exclusive = $exclusive;
         $this->xmlReader = new XmlReader();
     }
 
@@ -82,13 +89,13 @@ final class XmlSignatureVerifier
             $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//xmlns:SignatureValue', $signedInfoNode);
             $signatureValueElement->nodeValue = '';
 
-            $canonicalData = $signedInfoNode->C14N(true, false);
+            $canonicalData = $signedInfoNode->C14N($this->exclusive, false);
 
             $xml2 = new DOMDocument();
             $xml2->preserveWhiteSpace = true;
             $xml2->formatOutput = true;
             $xml2->loadXML($canonicalData);
-            $canonicalData = $xml2->C14N(true, false);
+            $canonicalData = $xml2->C14N($this->exclusive, false);
 
             $isValidSignature = $this->cryptoVerifier->verify($canonicalData, $signatureValue, $signatureAlgorithm);
 
@@ -124,8 +131,8 @@ final class XmlSignatureVerifier
             $signatureNode->parentNode->removeChild($signatureNode);
         }
 
-        // Canonicalize the content, exclusive and without comments
-        $canonicalData = $xml->C14N(true, false);
+        // Canonicalize the content without comments
+        $canonicalData = $xml->C14N($this->exclusive, false);
 
         $digestValue2 = $this->cryptoVerifier->computeDigest($canonicalData, $algorithm);
 

@@ -52,38 +52,43 @@ final class XmlSignatureTest extends TestCase
 
         foreach ($files as $filename) {
             foreach ($algos as $algo) {
-                $privateKeyStore = new PrivateKeyStore();
-
-                if (pathinfo($privateKeyFile, PATHINFO_EXTENSION) === 'p12') {
-                    $privateKeyStore->loadFromPkcs12(file_get_contents($privateKeyFile), $password);
-                } else {
-                    $privateKeyStore->loadFromPem(file_get_contents($privateKeyFile), $password);
-                }
-
-                $algorithm = new Algorithm($algo, $algo);
-                $cryptoSigner = new CryptoSigner($privateKeyStore, $algorithm);
-
-                $xmlSigner = new XmlSigner($cryptoSigner);
-                $xmlSigner->setReferenceUri('');
-
-                $signedXml = $xmlSigner->signXml(file_get_contents($filename));
-
-                // verify
-                $publicKeyStore = new PublicKeyStore();
-                if (pathinfo($publicKeyFile, PATHINFO_EXTENSION) === 'p12') {
-                    $publicKeyStore->loadFromPkcs12(file_get_contents($publicKeyFile), $password);
-                } else {
-                    $publicKeyStore->loadFromPem(file_get_contents($publicKeyFile));
-                }
-
-                $cryptoVerifier = new CryptoVerifier($publicKeyStore);
-                $xmlSignatureVerifier = new XmlSignatureVerifier($cryptoVerifier);
-
-                $isValid = $xmlSignatureVerifier->verifyXml($signedXml);
-
-                $this->assertTrue($isValid);
+                $this->testFileAndAlgo($filename, $algo, $privateKeyFile, $publicKeyFile, $password);
             }
         }
+    }
+
+    private function testFileAndAlgo(string $filename, string $algo, string $privateKeyFile, string $publicKeyFile, string $password)
+    {
+        $privateKeyStore = new PrivateKeyStore();
+
+        if (pathinfo($privateKeyFile, PATHINFO_EXTENSION) === 'p12') {
+            $privateKeyStore->loadFromPkcs12(file_get_contents($privateKeyFile), $password);
+        } else {
+            $privateKeyStore->loadFromPem(file_get_contents($privateKeyFile), $password);
+        }
+
+        $algorithm = new Algorithm($algo, $algo);
+        $cryptoSigner = new CryptoSigner($privateKeyStore, $algorithm);
+
+        $xmlSigner = new XmlSigner($cryptoSigner);
+        $xmlSigner->setReferenceUri('');
+
+        $signedXml = $xmlSigner->signXml(file_get_contents($filename));
+
+        // verify
+        $publicKeyStore = new PublicKeyStore();
+        if (pathinfo($publicKeyFile, PATHINFO_EXTENSION) === 'p12') {
+            $publicKeyStore->loadFromPkcs12(file_get_contents($publicKeyFile), $password);
+        } else {
+            $publicKeyStore->loadFromPem(file_get_contents($publicKeyFile));
+        }
+
+        $cryptoVerifier = new CryptoVerifier($publicKeyStore);
+        $xmlSignatureVerifier = new XmlSignatureVerifier($cryptoVerifier);
+
+        $isValid = $xmlSignatureVerifier->verifyXml($signedXml);
+
+        $this->assertTrue($isValid);
     }
 
     /**
